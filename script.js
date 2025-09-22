@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // GANTI DENGAN URL NGROK ATAU ALAMAT IP BACKEND ANDA
     // Pastikan backend Anda berjalan dan mengarahkan ke port Flask (biasanya 5000)
-    const BACKEND_API_URL = 'YOUR_NGROK_URL_HERE/generate-instrumental'; // <-- GANTI INI!
+    const BACKEND_API_URL = 'YOUR_BACKEND_URL_HERE/generate-instrumental'; // <-- GANTI INI!
 
     let wavesurferInstance = null; // Instans Wavesurfer
 
