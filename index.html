@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text-to-Instrumental Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Sertakan script html-midi-player untuk visualisasi piano roll -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/html-midi-player@1.6.0/dist/bundle.js"></script>
+    <!-- Sertakan Wavesurfer.js untuk visualisasi waveform -->
+    <script src="https://unpkg.com/wavesurfer.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Text-to-Instrumental Generator</h1>
+        <p>Masukkan lirik di bawah ini dan tunggu AI menciptakan instrumental untuk Anda!</p>
+
+        <textarea id="lyricsInput" placeholder="Masukkan lirik Anda di sini..."></textarea>
+
+        <button id="generateBtn">Generate Instrumental</button>
+
+        <div id="loadingSpinner" class="spinner-container" style="display: none;">
+            <div class="spinner"></div>
+            <p>Membuat instrumental Anda...</p>
+        </div>
+
+        <div id="musicOutput" style="display: none;">
+            <h2>Instrumental Anda:</h2>
+            <audio id="audioPlayer" controls></audio>
+
+            <h3>Visualisasi Piano Roll:</h3>
+            <midi-visualizer type="piano-roll" id="midiVisualizer"></midi-visualizer>
+
+            <h3>Visualisasi Waveform:</h3>
+            <div id="waveform"></div>
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display: none;">
+            Oops! Terjadi kesalahan saat membuat instrumental. Silakan coba lagi nanti.
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
