@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // 2. Kirim permintaan POST ke backend
-            const response = await fetch(`${BACKEND_API_URL}/generate-instrumental`, {
+            const response = await fetch(`${BACKEND_API_URL}/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text: lyrics }), // Mengirim lirik dalam format JSON
