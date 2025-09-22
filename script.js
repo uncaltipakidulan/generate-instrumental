@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // URL API ngrok Anda yang sedang aktif dan berfungsi.
     // PENTING: URL ini akan berubah setiap kali Anda memulai ulang ngrok di akun gratis.
-    // Pastikan untuk selalu menambahkan "/generate-music" di akhir.
+    // Pastikan untuk selalu menambahkan "/generate-instrumental" di akhir.
     const BACKEND_API_URL = 'https://dindwwctyp.a.pinggy.link';
 
     // === Fungsi Pembantu ===
