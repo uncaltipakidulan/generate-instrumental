@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // URL API ngrok Anda yang sedang aktif dan berfungsi.
     // PENTING: URL ini akan berubah setiap kali Anda memulai ulang ngrok di akun gratis.
     // Pastikan untuk selalu menambahkan "/generate-music" di akhir.
-    const BACKEND_API_URL = 'https://4df59adb99ac.ngrok-free.app/generate-music';
+    const BACKEND_API_URL = 'http://dindwwctyp.a.pinggy.link';
 
     // === Fungsi Pembantu ===
     // Fungsi untuk menyembunyikan semua pesan status (loading, hasil, error)
