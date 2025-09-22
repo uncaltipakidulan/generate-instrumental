@@ -3,43 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text-to-Instrumental Generator</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Sertakan script html-midi-player untuk visualisasi piano roll -->
-    <script type="module" src="./midi-player.js"></script>
-    <!-- Sertakan Wavesurfer.js untuk visualisasi waveform -->
-    <script src="https://unpkg.com/wavesurfer.js"></script>
+    <title>Agnes - Text to Instrumental</title>
+    <!-- Tailwind CSS (untuk styling cepat, ganti dengan build production di proyek nyata) -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Custom CSS Anda -->
+    <link rel="stylesheet" href="./style.css">
 </head>
-<body>
-    <div class="container">
-        <h1>Text-to-Instrumental Generator</h1>
-        <p>Masukkan teks/lirik di bawah ini untuk membuat instrumental Anda!</p>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-        <textarea id="lyricsInput" placeholder="Masukkan teks/lirik Anda di sini..."></textarea>
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Text to Instrumental</h1>
 
-        <button id="generateBtn">Generate Instrumental</button>
-
-        <div id="loadingSpinner" class="spinner-container" style="display: none;">
-            <div class="spinner"></div>
-            <p>Membuat instrumental Anda...</p>
+        <div class="mb-4">
+            <label for="lyricsInput" class="block text-gray-700 text-sm font-bold mb-2">
+                Masukkan Lirik atau Teks Anda:
+            </label>
+            <textarea id="lyricsInput" 
+                      class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline resize-y min-h-[100px]" 
+                      placeholder="Contoh: Ini adalah lirik lagu yang akan diubah menjadi instrumental."></textarea>
         </div>
 
-        <div id="musicOutput" style="display: none;">
-            <h2>Instrumental Anda:</h2>
-            <audio id="audioPlayer" controls></audio>
+        <button id="generateBtn" 
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+            Buat Instrumental
+        </button>
 
-            <h3>Visualisasi Piano Roll:</h3>
-            <midi-visualizer type="piano-roll" id="midiVisualizer"></midi-visualizer>
-
-            <h3>Visualisasi Waveform:</h3>
-            <div id="waveform"></div>
+        <!-- Area Pesan Loading -->
+        <div id="loading" class="hidden mt-4 p-3 bg-blue-100 text-blue-800 rounded text-center">
+            <svg class="animate-spin h-5 w-5 mr-3 inline-block" viewBox="0 0 24 24" fill="currentColor">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Memproses musik Anda...
         </div>
 
-        <div id="errorMessage" class="error-message" style="display: none;">
-            Oops! Terjadi kesalahan saat membuat instrumental. Silakan coba lagi nanti.
+        <!-- Area Pesan Sukses/Hasil -->
+        <div id="result" class="hidden mt-4 p-3 bg-green-100 text-green-800 rounded text-center">
+            <!-- Pesan sukses akan dimasukkan di sini oleh JavaScript -->
+        </div>
+
+        <!-- Area Audio Player -->
+        <div class="mt-4 hidden" id="audioPlayerContainer">
+            <audio id="audioPlayer" controls class="w-full"></audio>
+            <a id="downloadLink" href="#" download class="block mt-2 text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+                Unduh Instrumental
+            </a>
+        </div>
+        
+        <!-- MIDI Visualizer -->
+        <!-- Pastikan elemen midi-visualizer ini punya lebar dan tinggi agar terlihat -->
+        <div class="mt-6 hidden" id="midiVisualizerContainer">
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Visualisasi MIDI:</h3>
+            <midi-visualizer id="midiVisualizer" 
+                             style="width: 100%; height: 150px; background-color: #f0f0f0; border-radius: 5px;"></midi-visualizer>
+        </div>
+
+        <!-- Area Pesan Error -->
+        <div id="error" class="hidden mt-4 p-3 bg-red-100 text-red-800 rounded text-center">
+            <strong>Terjadi Kesalahan:</strong> <span id="errorMessage"></span>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- html-midi-player bundle.js (Pastikan ini mengarah ke file lokal Anda) -->
+    <script type="module" src="./js/bundle.js"></script>
+    <!-- Script aplikasi Anda -->
+    <script src="./script.js" defer></script>
 </body>
 </html>
