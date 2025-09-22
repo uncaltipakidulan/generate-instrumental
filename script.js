@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // GANTI DENGAN URL NGROK ATAU ALAMAT IP BACKEND ANDA
     // Pastikan backend Anda berjalan dan mengarahkan ke port Flask (biasanya 5000)
-    const BACKEND_API_URL = 'https://vWQ3MNnuqZj@free.pinggy.io'; // <-- GANTI INI!
+    const BACKEND_API_URL = 'https://towyb-182-10-131-12.a.free.pinggy.link'; // <-- GANTI INI!
 
     let wavesurferInstance = null; // Instans Wavesurfer
 
