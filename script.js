@@ -227,4 +227,3 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inisialisasi wavesurfer pertama kali agar elemen tersedia dan WaveSurfer aktif
     initOrUpdateWavesurfer();
 });
-```
