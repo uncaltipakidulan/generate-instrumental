@@ -1,21 +1,29 @@
 /* style.css */
 
-/*
-  Ini adalah CSS kustom Anda.
-  Beberapa gaya dasar sudah disediakan oleh Tailwind CSS.
-  Anda bisa menimpa atau menambahkan gaya baru di sini.
-*/
-
 /* --- Umum --- */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: #333;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f2f5; /* Latar belakang abu-abu terang */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Mengatur ke atas, bukan tengah vertikal penuh */
+    min-height: 100vh; /* Minimum tinggi viewport */
+    padding-top: 30px; /* Sedikit padding dari atas */
+    box-sizing: border-box; /* Pastikan padding tidak menambah lebar/tinggi */
 }
 
-/* Sembunyikan elemen secara default (digunakan oleh JavaScript) */
-.hidden {
-    display: none !important;
+h1, h2, h3 {
+    color: #2c3e50;
+    margin-top: 0; /* Hapus margin atas default */
+    margin-bottom: 1rem; /* Tambahkan sedikit margin bawah */
+}
+
+p {
+    margin-bottom: 1rem;
 }
 
 /* --- Container Utama --- */
@@ -28,82 +36,132 @@ body {
 }
 
 .rounded-lg {
-    border-radius: 0.5rem; /* 8px */
+    border-radius: 0.75rem; /* Sedikit lebih membulat */
 }
 
 .p-8 {
-    padding: 2rem; /* 32px */
+    padding: 2.5rem; /* Padding sedikit lebih besar */
 }
 
 /* --- Input dan Tombol --- */
 #lyricsInput {
+    width: 100%; /* Lebar penuh */
+    min-height: 150px; /* Tinggi minimum yang lebih besar */
     border: 1px solid #d1d5db; /* gray-300 */
-    border-radius: 0.25rem; /* 4px */
-    padding: 0.5rem 0.75rem; /* 8px 12px */
+    border-radius: 0.5rem; /* Lebih membulat */
+    padding: 1rem; /* Padding lebih besar */
     background-color: #f9fafb; /* gray-50 */
-    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem; /* Spasi bawah lebih besar */
+    resize: vertical; /* Izinkan pengguna mengubah ukuran secara vertikal */
+    box-sizing: border-box; /* Pastikan padding tidak menambah lebar */
 }
 
 #lyricsInput:focus {
     border-color: #3b82f6; /* blue-500 */
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* blue-500 dengan transparansi */
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); /* blue-500 dengan transparansi */
     outline: none;
 }
 
 #generateBtn {
+    width: 100%; /* Lebar penuh */
+    padding: 1rem 1.5rem; /* Padding lebih besar */
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #3b82f6; /* blue-500 */
+    border: none;
+    border-radius: 0.5rem; /* Lebih membulat */
+    cursor: pointer;
     transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    margin-bottom: 2rem; /* Spasi bawah lebih besar */
 }
 
 #generateBtn:hover {
     background-color: #2563eb; /* blue-700 */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 #generateBtn:disabled {
     background-color: #9ca3af; /* gray-400 */
     cursor: not-allowed;
+    box-shadow: none;
 }
 
-/* --- Pesan Status (Loading, Result, Error) --- */
-#loading, #result, #error {
-    border-radius: 0.25rem; /* 4px */
-    padding: 0.75rem 1rem; /* 12px 16px */
-    font-size: 0.9rem;
-}
-
-#loading {
-    background-color: #e0f2fe; /* blue-100 */
-    color: #0d47a1; /* blue-900 */
-    display: flex; /* Untuk ikon spinner */
+/* --- Pesan Status (Loading, Error) --- */
+/* ID: loadingSpinner */
+#loadingSpinner {
+    display: flex; /* Menggunakan flexbox untuk penempatan spinner */
+    flex-direction: column; /* Spinner dan teks dalam kolom */
     align-items: center;
     justify-content: center;
+    padding: 1.5rem;
+    background-color: #e0f2fe; /* blue-100 */
+    color: #0d47a1; /* blue-900 */
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
 }
 
-#result {
-    background-color: #e6fffa; /* green-100 */
-    color: #10b981; /* green-600 */
+#loadingSpinner p {
+    margin-top: 1rem; /* Spasi antara spinner dan teks */
+    font-weight: 500;
+    font-size: 1.1rem;
 }
 
-#error {
+/* Spinner icon */
+#loadingSpinner svg {
+    /* Tailwind CSS classes already apply basic styles */
+}
+
+/* ID: errorMessage */
+#errorMessage {
     background-color: #fee2e2; /* red-100 */
     color: #ef4444; /* red-600 */
+    border-radius: 0.5rem;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 2rem;
+    text-align: center;
 }
 
-#errorMessage {
-    font-weight: normal;
+/* --- Output Musik --- */
+/* ID: musicOutput */
+#musicOutput {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb; /* Garis pemisah */
+}
+
+#musicOutput h2 {
+    color: #1a202c;
+    margin-bottom: 1.5rem;
+}
+
+#musicOutput h3 {
+    color: #4a5568;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.2rem;
 }
 
 /* --- Audio Player dan Download Link --- */
+/* ID: audioPlayer */
 #audioPlayer {
     width: 100%;
     margin-top: 1rem;
+    background-color: #f0f0f0; /* Latar belakang untuk audio player */
+    border-radius: 0.5rem;
 }
 
+/* ID: downloadLink */
 #downloadLink {
     text-decoration: none;
     display: block;
-    border-radius: 0.25rem;
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
+    border-radius: 0.5rem; /* Lebih membulat */
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
     text-align: center;
     transition: background-color 0.2s ease-in-out;
 }
@@ -113,21 +171,79 @@ body {
 }
 
 /* --- MIDI Visualizer --- */
-/* Pastikan elemen ini punya height agar terlihat */
+/* ID: midiVisualizer */
 #midiVisualizer {
     background-color: #f0f0f0; /* Latar belakang visualizer */
     border: 1px solid #d1d5db; /* Batas tipis */
-    border-radius: 0.25rem;
+    border-radius: 0.5rem; /* Lebih membulat */
     overflow: hidden; /* Penting jika visualizer menggambar di luar batas */
+    height: 150px; /* Tinggi tetap untuk visualizer agar tidak collaps */
+    width: 100%; /* Lebar penuh */
+    box-sizing: border-box; /* Pastikan padding/border tidak menambah lebar */
 }
 
-/* Jika Anda ingin sedikit lebih banyak kontrol pada warna visualizer
-   (tergantung versi html-midi-player dan bagaimana ia menimpa gaya): */
-/*
+/* Kontrol warna midi-visualizer */
 midi-visualizer {
-    --midi-player-progress-color: #3b82f6;
-    --midi-player-secondary-color: #60a5fa;
-    --midi-player-note-color: #10b981;
+    --midi-player-progress-color: #3b82f6; /* Warna progres MIDI */
+    --midi-player-secondary-color: #60a5fa; /* Warna sekunder MIDI */
+    --midi-player-note-color: #10b981; /* Warna not MIDI */
 }
-*/
 
+/* --- Wavesurfer.js Container --- */
+/* ID: waveform */
+#waveform {
+    width: 100%;
+    height: 120px; /* Tinggi tetap untuk waveform */
+    background-color: #f0f0f0; /* Latar belakang untuk waveform */
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    box-sizing: border-box;
+    margin-top: 1rem; /* Spasi dari elemen di atasnya */
+}
+
+/* --- Utility Classes (sebelumnya ada .hidden) --- */
+/* Tailwind CSS sudah menyediakan ini, tapi jika Anda ingin custom: */
+.hidden {
+    display: none !important;
+}
+
+/* --- Media Queries untuk responsifitas --- */
+@media (max-width: 768px) {
+    .p-8 { /* padding container */
+        padding: 1.5rem;
+    }
+    .w-full.max-w-lg { /* container width */
+        width: 95%;
+    }
+    #generateBtn {
+        padding: 0.8rem 1rem;
+        font-size: 1rem;
+    }
+    #loadingSpinner, #errorMessage {
+        padding: 1rem;
+    }
+    #loadingSpinner p {
+        font-size: 1rem;
+    }
+    h1 {
+        font-size: 1.8rem;
+    }
+    #midiVisualizer, #waveform {
+        height: 180px; /* Lebih kecil untuk layar kecil */
+    }
+}
+
+@media (max-width: 480px) {
+    .p-8 { /* padding container */
+        padding: 1rem;
+    }
+    h1 {
+        font-size: 1.5rem;
+    }
+    #lyricsInput {
+        min-height: 120px;
+    }
+    #midiVisualizer, #waveform {
+        height: 150px;
+    }
+}
