@@ -9,8 +9,7 @@
     <!-- Custom CSS Anda -->
     <link rel="stylesheet" href="./style.css">
 
-    <!-- Sertakan html-midi-player untuk visualisasi piano roll (dari CDN) -->
-    <!-- Menggunakan versi 1.6.0 yang merupakan versi bundle terbaru -->
+    <!-- Sertakan html-midi-player untuk MIDI Player dan visualisasi piano roll (dari CDN) -->
     <script type="module" src="https://cdn.jsdelivr.net/npm/html-midi-player@1.6.0/dist/bundle.js"></script>
 
     <!-- Sertakan Wavesurfer.js untuk visualisasi waveform (PENTING!) -->
@@ -36,8 +35,8 @@
             Generate Instrumental
         </button>
 
-        <!-- Area Pesan Loading (ID: loadingSpinner, sesuai script.js) -->
-        <div id="loadingSpinner" class="hidden mt-4 p-3 bg-blue-100 text-blue-800 rounded text-center flex items-center justify-center">
+        <!-- Area Pesan Loading (ID: loadingDiv, sesuai script.js) -->
+        <div id="loadingDiv" class="hidden mt-4 p-3 bg-blue-100 text-blue-800 rounded text-center flex items-center justify-center">
             <svg class="animate-spin h-5 w-5 mr-3 inline-block" viewBox="0 0 24 24" fill="currentColor">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -45,35 +44,55 @@
             Membuat instrumental Anda...
         </div>
 
-        <!-- Wadah Output Musik Utama (ID: musicOutput, sesuai script.js) -->
-        <div id="musicOutput" class="hidden mt-4">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Instrumental Anda:</h2>
+        <!-- Area Pesan Sukses/Hasil (ID: resultDiv, sesuai script.js) -->
+        <div id="resultDiv" class="hidden mt-4 p-3 bg-green-100 text-green-800 rounded text-center">
+            Instrumental berhasil dibuat!
+        </div>
+
+        <!-- Wadah Output Musik Utama (ID: musicOutputDiv, sesuai script.js) -->
+        <div id="musicOutputDiv" class="hidden mt-4">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Output Instrumental:</h2>
             
-            <!-- Audio Player (ID: audioPlayer) -->
-            <div class="mb-4">
-                <audio id="audioPlayer" controls class="w-full"></audio>
-                <a id="downloadLink" href="#" download="generated_instrumental.wav" class="block mt-2 text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
-                    Download Instrumental
+            <!-- ====== BAGIAN AUDIO WAV ====== -->
+            <div id="audioPlayerContainer" class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Audio WAV:</h3>
+                <audio id="audioPlayer" controls class="w-full mb-2"></audio>
+                <a id="downloadLink" href="#" download="generated_instrumental.wav" class="block text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+                    Download WAV
                 </a>
             </div>
             
-            <!-- MIDI Visualizer (ID: midiVisualizer) -->
-            <div class="mb-4">
-                <h3 class="text-lg font-semibold text-gray-700 mb-2">Visualisasi Piano Roll:</h3>
-                <midi-visualizer type="piano-roll" id="midiVisualizer" 
-                                 style="width: 100%; height: 150px; background-color: #f0f0f0; border-radius: 5px;"></midi-visualizer>
-            </div>
-
-            <!-- Waveform Visualizer (ID: waveform) -->
-            <div>
+            <!-- ====== VISUALISASI WAVEFORM ====== -->
+            <div id="waveformContainer" class="mb-4">
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">Visualisasi Waveform:</h3>
                 <div id="waveform" style="width: 100%; height: 120px; border: 1px solid #d1d5db; border-radius: 5px;"></div>
             </div>
+
+            <!-- ====== BAGIAN MIDI PLAYER & VISUALIZER ====== -->
+            <div id="midiPlayerContainer" class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">MIDI Player (Piano Roll):</h3>
+                <!-- MIDI Player dengan visualizer terhubung -->
+                <midi-player id="midiPlayer"
+                             src=""
+                             sound-font
+                             visualizer="#midiVisualizer"
+                             class="w-full mb-2"
+                             style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 5px;">
+                </midi-player>
+                
+                <!-- MIDI Visualizer yang terhubung dengan midiPlayer di atas -->
+                <midi-visualizer type="piano-roll" id="midiVisualizer" 
+                                 style="width: 100%; height: 150px; background-color: #f0f0f0; border-radius: 5px;"></midi-visualizer>
+
+                <a id="downloadMidiLink" href="#" download="generated_instrumental.mid" class="block text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded mt-2">
+                    Download MIDI
+                </a>
+            </div>
         </div>
 
-        <!-- Area Pesan Error (ID: errorMessage, sesuai script.js) -->
-        <div id="errorMessage" class="hidden mt-4 p-3 bg-red-100 text-red-800 rounded text-center">
-            <!-- Pesan error akan diisi di sini oleh JavaScript -->
+        <!-- Area Pesan Error (ID: errorDiv, sesuai script.js) -->
+        <div id="errorDiv" class="hidden mt-4 p-3 bg-red-100 text-red-800 rounded text-center">
+            <strong>Terjadi Kesalahan:</strong> <span id="errorMessageSpan"></span>
         </div>
     </div>
 
