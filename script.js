@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset MIDI player/visualizer
         if (midiPlayer) {
             midiPlayer.src = '';
-            midiPlayer.stop(); // Stop playback
+             // Stop playback
         }
         if (midiVisualizer) {
             midiVisualizer.src = '';
