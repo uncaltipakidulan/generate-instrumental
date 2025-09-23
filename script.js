@@ -4,16 +4,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mendapatkan referensi ke elemen-elemen DOM
     const lyricsInput = document.getElementById('lyricsInput');
     const generateBtn = document.getElementById('generateBtn');
-    const loadingSpinner = document.getElementById('loadingSpinner'); // Menggunakan ID yang benar dari HTML
-    const musicOutput = document.getElementById('musicOutput');     // Menggunakan ID yang benar dari HTML
+    const loadingDiv = document.getElementById('loading'); // Menggunakan ID yang benar dari HTML
+    const resultDiv = document.getElementById('result');   // Menggunakan ID yang benar dari HTML
+    const musicOutputDiv = document.getElementById('musicOutput'); // Wadah utama untuk output musik
     const audioPlayer = document.getElementById('audioPlayer');
+    const downloadLink = document.getElementById('downloadLink'); // Menggunakan ID yang benar dari HTML
     const midiVisualizer = document.getElementById('midiVisualizer');
-    const waveformContainer = document.getElementById('waveform');  // Menggunakan ID yang benar dari HTML
-    const errorMessage = document.getElementById('errorMessage');   // Menggunakan ID yang benar dari HTML
+    const waveformContainer = document.getElementById('waveform'); // Menggunakan ID yang benar dari HTML
+    const errorDiv = document.getElementById('error');     // Menggunakan ID yang benar dari HTML
+    const errorMessageSpan = document.getElementById('errorMessage'); // Menggunakan ID yang benar dari HTML
 
     // URL API Pinggy Anda yang sedang aktif dan berfungsi.
-    // PENTING: URL ini akan berubah setiap kali Anda memulai ulang Pinggy di akun gratis.
-    // Pastikan untuk selalu menambahkan "/generate-instrumental" di akhir saat fetch.
     const BACKEND_API_URL = 'https://dindwwctyp.a.pinggy.link'; // Pastikan ini HTTPS!
 
     let wavesurferInstance = null; // Instans Wavesurfer
@@ -60,15 +61,41 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // Fungsi untuk menyembunyikan semua pesan status dan output
+    function hideAllOutput() {
+        loadingDiv.classList.add('hidden');
+        resultDiv.classList.add('hidden');
+        errorDiv.classList.add('hidden');
+        musicOutputDiv.classList.add('hidden'); // Sembunyikan seluruh output musik
+        
+        // Bersihkan konten dan sumber
+        resultDiv.innerHTML = '';
+        errorMessageSpan.textContent = '';
+        audioPlayer.src = '';
+        if (midiVisualizer) {
+            midiVisualizer.src = '';
+        }
+        if (wavesurferInstance) {
+            wavesurferInstance.empty();
+        }
+    }
+
     // === Validasi Elemen DOM ===
     // Memastikan semua elemen yang dibutuhkan ada sebelum menambahkan event listener
-    if (!lyricsInput || !generateBtn || !loadingSpinner || !musicOutput || !audioPlayer || !midiVisualizer || !waveformContainer || !errorMessage) {
+    const requiredElements = [
+        lyricsInput, generateBtn, loadingDiv, resultDiv, musicOutputDiv,
+        audioPlayer, downloadLink, midiVisualizer, waveformContainer,
+        errorDiv, errorMessageSpan
+    ];
+    const allElementsFound = requiredElements.every(el => el !== null);
+
+    if (!allElementsFound) {
         console.error('Satu atau lebih elemen DOM tidak ditemukan. Pastikan semua ID HTML benar.');
         if (generateBtn) {
             generateBtn.disabled = true;
             generateBtn.textContent = 'Error: Elemen tidak lengkap';
         }
-        // Jangan return di sini agar initOrUpdateWavesurfer tetap dipanggil untuk pertama kali
+        return; // Hentikan eksekusi jika elemen penting tidak ada
     }
 
     // === Event Listener untuk Tombol Generate ===
@@ -76,26 +103,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const lyrics = lyricsInput.value.trim();
 
         if (!lyrics) {
-            errorMessage.textContent = 'Mohon masukkan lirik untuk membuat instrumental!';
-            errorMessage.style.display = 'block';
-            musicOutput.style.display = 'none'; // Sembunyikan output sebelumnya
+            hideAllOutput(); // Sembunyikan output lain jika ada
+            errorMessageSpan.textContent = 'Mohon masukkan lirik untuk membuat instrumental!';
+            errorDiv.classList.remove('hidden');
             return;
         }
 
-        // Tampilan loading dan nonaktifkan tombol
-        generateBtn.disabled = true;
-        loadingSpinner.style.display = 'flex'; // Menggunakan flex untuk spinner
-        musicOutput.style.display = 'none';    // Sembunyikan hasil sebelumnya
-        errorMessage.style.display = 'none';   // Sembunyikan error sebelumnya
-
-        // Bersihkan konten sebelumnya
-        audioPlayer.src = '';
-        midiVisualizer.src = ''; // Bersihkan visualizer MIDI
-        if (wavesurferInstance) {
-            wavesurferInstance.empty(); // Kosongkan Wavesurfer
-            // wavesurferInstance.destroy(); // Tidak perlu destroy jika hanya ingin mengosongkan
-            // wavesurferInstance = null;
-        }
+        // 1. Sembunyikan semua pesan sebelumnya dan tampilkan loading
+        hideAllOutput();
+        loadingDiv.classList.remove('hidden');
+        generateBtn.disabled = true; // Nonaktifkan tombol saat memproses
+        generateBtn.textContent = 'Membuat Instrumental...'; // Beri umpan balik pada tombol
 
         try {
             const response = await fetch(`${BACKEND_API_URL}/generate-instrumental`, {
@@ -107,8 +125,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                let errorDetails = 'Terjadi kesalahan yang tidak diketahui.';
+                try {
+                    const errorData = await response.json();
+                    errorDetails = errorData.error || `HTTP error! status: ${response.status}`;
+                } catch (jsonError) {
+                    errorDetails = `Error ${response.status}: ${response.statusText || 'Gagal memparsing respons error.'}`;
+                }
+                throw new Error(errorDetails);
             }
 
             const data = await response.json();
@@ -120,34 +144,39 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Atur audio player
-            audioPlayer.src = `data:audio/wav;base64,${base64Wav}`;
+            const audioDataURL = `data:audio/wav;base64,${base64Wav}`;
+            audioPlayer.src = audioDataURL;
+            audioPlayer.load(); // Memuat audio
+            // audioPlayer.play(); // Putar secara otomatis (opsional)
+
+            // Atur link download
+            downloadLink.href = audioDataURL;
+            downloadLink.download = 'generated_instrumental.wav';
 
             // Atur MIDI visualizer
-            // Pastikan midiVisualizer ada sebelum mengatur src
             if (midiVisualizer) {
                 midiVisualizer.src = `data:audio/midi;base64,${base64Midi}`;
             }
 
             // Inisialisasi Wavesurfer dan muat audio
             initOrUpdateWavesurfer(); // Pastikan Wavesurfer siap
-            wavesurferInstance.load(`data:audio/wav;base64,${base64Wav}`); // Muat audio ke Wavesurfer
+            wavesurferInstance.load(audioDataURL); // Muat audio ke Wavesurfer
 
-            musicOutput.style.display = 'block';
-            // audioPlayer.play(); // Putar secara otomatis (opsional, bisa dinonaktifkan)
+            // Tampilkan hasil
+            resultDiv.classList.remove('hidden');
+            musicOutputDiv.classList.remove('hidden');
 
         } catch (error) {
             console.error('Error generating music:', error);
-            errorMessage.textContent = `Terjadi kesalahan: ${error.message || 'Server tidak merespons.'}`;
-            errorMessage.style.display = 'block';
-            musicOutput.style.display = 'none'; // Pastikan output tersembunyi jika ada error
+            errorMessageSpan.textContent = `Terjadi kesalahan: ${error.message || 'Server tidak merespons.'}`;
+            errorDiv.classList.remove('hidden');
         } finally {
-            loadingSpinner.style.display = 'none';
+            loadingDiv.classList.add('hidden');
             generateBtn.disabled = false;
-            generateBtn.textContent = 'Generate Instrumental'; // Kembalikan teks tombol
+            generateBtn.textContent = 'Buat Instrumental'; // Kembalikan teks tombol
         }
     });
 
     // Inisialisasi wavesurfer pertama kali agar elemen tersedia dan WaveSurfer aktif
-    // Ini juga penting untuk event listener audioPlayer.
     initOrUpdateWavesurfer();
 });
