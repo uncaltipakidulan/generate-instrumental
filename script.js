@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Mendapatkan referensi ke elemen-elemen DOM
     const lyricsInput = document.getElementById('lyricsInput');
+    const genreSelect = document.getElementById('genreSelect'); // BARU: Referensi ke elemen select genre
     const generateBtn = document.getElementById('generateBtn');
     
     // Status / Message elements
@@ -15,13 +16,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const musicOutputDiv = document.getElementById('musicOutputDiv');
     
     // WAV related elements
-    const audioPlayerContainer = document.getElementById('audioPlayerContainer'); // Added this ID to index.html
+    const audioPlayerContainer = document.getElementById('audioPlayerContainer');
     const audioPlayer = document.getElementById('audioPlayer');
     const downloadLink = document.getElementById('downloadLink'); // Download WAV
     const waveformContainer = document.getElementById('waveform'); // Container for Wavesurfer
     
     // MIDI related elements
-    const midiPlayerContainer = document.getElementById('midiPlayerContainer'); // Added this ID to index.html
+    const midiPlayerContainer = document.getElementById('midiPlayerContainer');
     const midiPlayer = document.getElementById('midiPlayer'); // The <midi-player> element
     const midiVisualizer = document.getElementById('midiVisualizer'); // The <midi-visualizer> element
     const downloadMidiLink = document.getElementById('downloadMidiLink'); // Download MIDI
@@ -99,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset MIDI player/visualizer
         if (midiPlayer) {
             midiPlayer.src = '';
-            // midiPlayer.stop(); // Hapus ini, karena midiPlayer tidak punya metode stop()
+            // midiPlayer.stop(); // Dihapus karena tidak ada metode stop()
         }
         if (midiVisualizer) {
             midiVisualizer.src = '';
@@ -116,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === Validasi Elemen DOM ===
     // Pastikan semua elemen yang dibutuhkan ada saat DOMContentLoaded
     const requiredElements = [
-        lyricsInput, generateBtn, loadingDiv, resultDiv, errorDiv, errorMessageSpan,
+        lyricsInput, genreSelect, generateBtn, loadingDiv, resultDiv, errorDiv, errorMessageSpan, // BARU: genreSelect
         musicOutputDiv, audioPlayerContainer, audioPlayer, downloadLink, waveformContainer,
         midiPlayerContainer, midiPlayer, midiVisualizer, downloadMidiLink
     ];
@@ -136,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === Event Listener untuk Tombol Generate ===
     generateBtn.addEventListener('click', async () => {
         const lyrics = lyricsInput.value.trim();
+        const selectedGenre = genreSelect.value; // BARU: Ambil nilai genre yang dipilih
 
         if (!lyrics) {
             hideAllOutput();
@@ -153,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${BACKEND_API_URL}/generate-instrumental`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: lyrics }),
+                body: JSON.stringify({ text: lyrics, genre: selectedGenre }), // BARU: Kirim genre ke backend
             });
 
             if (!response.ok) {
@@ -236,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             loadingDiv.classList.add('hidden');
             generateBtn.disabled = false;
-            generateBtn.textContent = 'Generate Instrumental';
+            generateBtn.textContent = 'Buat Instrumental';
         }
     });
 
@@ -244,3 +246,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // (Akan direfresh setiap kali ada generate baru)
     initOrUpdateWavesurfer();
 });
+```
