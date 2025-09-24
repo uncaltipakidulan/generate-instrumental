@@ -9,27 +9,23 @@
     <!-- Custom CSS Anda -->
     <link rel="stylesheet" href="./style.css">
 
-    <!-- *** KONFIGURASI SCRIPT JAVASCRIPT UNTUK html-midi-player dan Wavesurfer *** -->
+    <!-- Dependencies untuk html-midi-player: Tone.js dan Magenta.js -->
+    <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.6.0/dist/midi-player.min.js"></script>
 
+    <!-- Load Wavesurfer.js secara LOKAL -->
+    <script src="./wavesurfer.js"></script>
+    
     <!-- Penting: meta tag CSP harus di awal head, sebelum script lain -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self' data:;
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
         connect-src 'self' https://dindwwctyp.a.pinggy.link data: https://storage.googleapis.com;
-        img-src 'self' data:;
+        img-src 'self' data: https://storage.googleapis.com;
         style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
         font-src 'self' data: https://storage.googleapis.com;
-        media-src 'self' data: blob: https://storage.googleapis.com;
+        media-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link; /* Tambahkan URL backend untuk file audio */
         worker-src 'self' blob:;
     ">
-
-    <!-- Dependencies untuk html-midi-player: Tone.js dan Magenta.js -->
-    <!-- Menggunakan jalur combine yang benar dari JSDelivr -->
-    <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.6.0/dist/midi-player.min.js"></script>
-
-    <!-- Load Wavesurfer.js secara LOKAL untuk menghindari masalah CDN/MIME type -->
-    <script src="./wavesurfer.js"></script>
-    
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
@@ -43,11 +39,11 @@
             </label>
             <textarea id="lyricsInput" 
                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline resize-y min-h-[100px]" 
-                      placeholder="Teks atau lirik lagu yang akan diubah menjadi instrumental."></textarea>
+                      placeholder="Teks atau lirik lagu yang akan diubah menjadi instrumental.&#10;Contoh:&#10;[intro]&#10;Ini adalah intro&#10;[verse 1]&#10;Ini adalah verse pertama&#10;[chorus]&#10;Ini adalah chorus"></textarea>
         </div>
 
         <!-- Tambahan: Input untuk Pemilihan Genre -->
-        <div class="mb-6">
+        <div class="mb-4">
             <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">
                 Pilih Genre Musik:
             </label>
@@ -59,8 +55,16 @@
                 <option value="metal">Metal</option>
                 <option value="ballad">Ballad</option>
                 <option value="blues">Blues</option>
-                <!-- Anda bisa menambahkan lebih banyak genre di sini -->
             </select>
+        </div>
+
+        <!-- Tambahan: Input untuk Pemilihan Tempo -->
+        <div class="mb-6">
+            <label for="tempoSlider" class="block text-gray-700 text-sm font-bold mb-2">
+                Tempo (BPM): <span id="tempoValue">Auto</span>
+            </label>
+            <input type="range" id="tempoSlider" min="60" max="200" value="0" step="1"
+                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
         </div>
 
         <button id="generateBtn" 
@@ -86,12 +90,12 @@
         <div id="musicOutputDiv" class="hidden mt-4">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Output Instrumental:</h2>
             
-            <!-- ====== BAGIAN AUDIO WAV ====== -->
+            <!-- ====== BAGIAN AUDIO (WAV/MP3) ====== -->
             <div id="audioPlayerContainer" class="mb-4">
-                <h3 class="text-lg font-semibold text-gray-700 mb-2">Audio WAV:</h3>
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Audio Playback:</h3>
                 <audio id="audioPlayer" controls class="w-full mb-2"></audio>
-                <a id="downloadLink" href="#" download="generated_instrumental.wav" class="block text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
-                    Download WAV
+                <a id="downloadLink" href="#" download="generated_instrumental.mp3" class="block text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+                    Download Audio
                 </a>
             </div>
             
@@ -104,7 +108,6 @@
             <!-- ====== BAGIAN MIDI PLAYER & VISUALIZER ====== -->
             <div id="midiPlayerContainer" class="mb-4">
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">MIDI Player (Piano Roll):</h3>
-                <!-- MIDI Player dengan visualizer terhubung -->
                 <midi-player id="midiPlayer"
                              src=""
                              sound-font
@@ -113,7 +116,6 @@
                              style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 5px;">
                 </midi-player>
                 
-                <!-- MIDI Visualizer yang terhubung dengan midiPlayer di atas -->
                 <midi-visualizer type="piano-roll" id="midiVisualizer" 
                                  style="width: 100%; height: 150px; background-color: #f0f0f0; border-radius: 5px;"></midi-visualizer>
 
@@ -133,5 +135,3 @@
     <script src="./script.js" defer></script>
 </body>
 </html>
-
----
