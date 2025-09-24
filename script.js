@@ -1,143 +1,46 @@
 // script.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Mendapatkan referensi ke elemen-elemen DOM
-    const lyricsInput = document.getElementById('lyricsInput');
-    const genreSelect = document.getElementById('genreSelect'); // BARU: Referensi ke elemen select genre
-    const generateBtn = document.getElementById('generateBtn');
-    
-    // Status / Message elements
-    const loadingDiv = document.getElementById('loadingDiv');
-    const resultDiv = document.getElementById('resultDiv');
-    const errorDiv = document.getElementById('errorDiv');
-    const errorMessageSpan = document.getElementById('errorMessageSpan');
+    // ... (Mendapatkan referensi ke elemen-elemen DOM) ...
 
-    // Main output container
-    const musicOutputDiv = document.getElementById('musicOutputDiv');
-    
-    // WAV related elements
-    const audioPlayerContainer = document.getElementById('audioPlayerContainer');
-    const audioPlayer = document.getElementById('audioPlayer');
-    const downloadLink = document.getElementById('downloadLink'); // Download WAV
-    const waveformContainer = document.getElementById('waveform'); // Container for Wavesurfer
-    
-    // MIDI related elements
-    const midiPlayerContainer = document.getElementById('midiPlayerContainer');
-    const midiPlayer = document.getElementById('midiPlayer'); // The <midi-player> element
-    const midiVisualizer = document.getElementById('midiVisualizer'); // The <midi-visualizer> element
-    const downloadMidiLink = document.getElementById('downloadMidiLink'); // Download MIDI
+    const BACKEND_API_URL = 'https://dindwwctyp.a.pinggy.link';
 
-    // URL API Pinggy Anda yang sedang aktif dan berfungsi.
-    const BACKEND_API_URL = 'https://dindwwctyp.a.pinggy.link'; // Pastikan ini HTTPS!
+    let wavesurferInstance = null;
 
-    let wavesurferInstance = null; // Instans Wavesurfer
+    // ... (Fungsi initOrUpdateWavesurfer) ...
 
-    // Fungsi untuk menginisialisasi atau memperbarui Wavesurfer
-    const initOrUpdateWavesurfer = () => {
-        // Destroy existing instance if any
-        if (wavesurferInstance) {
-            wavesurferInstance.destroy();
-            wavesurferInstance = null; // Clear reference
-        }
-        
-        // Ensure container is not null before creating Wavesurfer
-        if (!waveformContainer) {
-            console.error("Wavesurfer container #waveform not found!");
-            return;
-        }
+    // ... (Fungsi hideAllOutput) ...
 
-        wavesurferInstance = WaveSurfer.create({
-            container: waveformContainer,
-            waveColor: '#a0f0ff',
-            progressColor: '#ffd700',
-            cursorColor: '#ff00ff',
-            barWidth: 3,
-            height: 120,
-            responsive: true,
-            hideScrollbar: true,
-            interact: true,
-            backend: 'MediaElement', // Use MediaElement for better sync with HTML audio
-            media: audioPlayer // Connect directly to the standard HTML audio element
-        });
-
-        // Event listeners for playback synchronization
-        wavesurferInstance.on('interaction', () => {
-            if (wavesurferInstance.isPlaying()) {
-                audioPlayer.play();
-            } else {
-                audioPlayer.pause();
-            }
-        });
-        audioPlayer.addEventListener('play', () => wavesurferInstance.play());
-        audioPlayer.addEventListener('pause', () => wavesurferInstance.pause());
-        audioPlayer.addEventListener('seeked', () => {
-            if (audioPlayer.duration) {
-                wavesurferInstance.seekTo(audioPlayer.currentTime / audioPlayer.duration);
-            }
-        });
-        audioPlayer.addEventListener('timeupdate', () => {
-            if (wavesurferInstance.isPlaying() && audioPlayer.duration) {
-                wavesurferInstance.seekTo(audioPlayer.currentTime / audioPlayer.duration);
-            }
-        });
-    };
-
-    // Fungsi untuk menyembunyikan semua pesan status dan output
-    function hideAllOutput() {
-        loadingDiv.classList.add('hidden');
-        resultDiv.classList.add('hidden');
-        errorDiv.classList.add('hidden');
-        musicOutputDiv.classList.add('hidden'); // Sembunyikan seluruh output musik
-        
-        errorMessageSpan.textContent = ''; // Clear error message
-
-        // Reset audio player
-        audioPlayer.src = '';
-        audioPlayer.load();
-        downloadLink.removeAttribute('href');
-        downloadLink.removeAttribute('download');
-
-        // Reset MIDI player/visualizer
-        if (midiPlayer) {
-            midiPlayer.src = '';
-            // midiPlayer.stop(); // Dihapus karena tidak ada metode stop()
-        }
-        if (midiVisualizer) {
-            midiVisualizer.src = '';
-        }
-        downloadMidiLink.removeAttribute('href');
-        downloadMidiLink.removeAttribute('download');
-
-        // Reset Wavesurfer
-        if (wavesurferInstance) {
-            wavesurferInstance.empty();
-        }
-    }
-
-    // === Validasi Elemen DOM ===
-    // Pastikan semua elemen yang dibutuhkan ada saat DOMContentLoaded
-    const requiredElements = [
-        lyricsInput, genreSelect, generateBtn, loadingDiv, resultDiv, errorDiv, errorMessageSpan, // BARU: genreSelect
-        musicOutputDiv, audioPlayerContainer, audioPlayer, downloadLink, waveformContainer,
-        midiPlayerContainer, midiPlayer, midiVisualizer, downloadMidiLink
-    ];
-    
-    // Collect names of missing elements for better debugging
-    const missingElements = requiredElements.filter(el => el === null).map(el => el ? el.id : el); // Handle null elements
-
-    if (missingElements.length > 0) {
-        console.error('Satu atau lebih elemen DOM tidak ditemukan. Pastikan semua ID HTML benar. Missing:', missingElements.join(', '));
-        if (generateBtn) {
-            generateBtn.disabled = true;
-            generateBtn.textContent = 'Error: Elemen tidak lengkap';
-        }
-        return; // Hentikan eksekusi jika elemen penting tidak ada
-    }
+    // ... (Validasi Elemen DOM) ...
 
     // === Event Listener untuk Tombol Generate ===
     generateBtn.addEventListener('click', async () => {
+        // --- PENTING: MEMULAI AUDIO CONTEXT SEGERA SETELAH USER GESTURE ---
+        // Panggil Tone.start() di sini, di awal event listener
+        if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
+            try {
+                await Tone.start();
+                console.log('AudioContext started by Tone.js on user gesture.');
+            } catch (e) {
+                console.error("Failed to start Tone.js AudioContext on user gesture:", e);
+                // Jika gagal, mungkin tidak ada audio yang akan diputar
+                errorMessageSpan.textContent = `Gagal memulai audio: ${e.message}. Coba lagi.`;
+                errorDiv.classList.remove('hidden');
+                loadingDiv.classList.add('hidden');
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Buat Instrumental';
+                return; // Hentikan eksekusi jika AudioContext tidak dapat dimulai
+            }
+        }
+        // Pastikan AudioContext untuk HTML audio element juga resume
+        if (audioPlayer.getContext && audioPlayer.getContext().state === 'suspended') {
+            audioPlayer.getContext().resume().catch(e => console.warn("Failed to resume HTML audio context:", e));
+        }
+        // --- AKHIR BAGIAN AUDIO CONTEXT ---
+
+
         const lyrics = lyricsInput.value.trim();
-        const selectedGenre = genreSelect.value; // BARU: Ambil nilai genre yang dipilih
+        const selectedGenre = genreSelect.value;
 
         if (!lyrics) {
             hideAllOutput();
@@ -155,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${BACKEND_API_URL}/generate-instrumental`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: lyrics, genre: selectedGenre }), // BARU: Kirim genre ke backend
+                body: JSON.stringify({ text: lyrics, genre: selectedGenre }),
             });
 
             if (!response.ok) {
@@ -193,10 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const midiDataURL = `data:audio/midi;base64,${base64Midi}`;
             if (midiPlayer) {
                 midiPlayer.src = midiDataURL;
-                // midi-visualizer akan otomatis diperbarui karena terhubung melalui visualizer="#midiVisualizer"
             }
             if (midiVisualizer) {
-                midiVisualizer.src = midiDataURL; // Juga set src di visualizer untuk redundansi
+                midiVisualizer.src = midiDataURL;
             }
             downloadMidiLink.href = midiDataURL;
             downloadMidiLink.download = 'generated_instrumental.mid';
@@ -204,32 +106,24 @@ document.addEventListener('DOMContentLoaded', () => {
             // ===========================================
             // TANGANI WAVESURFER
             // ===========================================
+            // Pastikan AudioContext Tone.js sudah berjalan sebelum init Wavesurfer
             initOrUpdateWavesurfer();
             wavesurferInstance.load(audioDataURL);
+
 
             // Tampilkan seluruh area output musik
             musicOutputDiv.classList.remove('hidden');
             resultDiv.classList.remove('hidden');
 
-            // --- PENTING: MEMULAI AUDIO CONTEXT UNTUK TONE.JS DAN WAVESURFER ---
-            // Ini akan memastikan audio dapat dimainkan setelah interaksi pengguna
-            if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
-                try {
-                    await Tone.start();
-                    console.log('AudioContext started by Tone.js.');
-                } catch (e) {
-                    console.error("Failed to start Tone.js AudioContext:", e);
-                }
-            }
-            // Tambahan: Pastikan audioPlayer HTML bisa diputar secara otomatis
-            // Ini mungkin masih diblokir oleh browser, tapi layak dicoba
-            if (audioPlayer.paused) {
-                audioPlayer.play().catch(e => console.warn("Autoplay of audioPlayer blocked:", e));
-            }
-            // Tambahan: Mulai pemutar MIDI secara otomatis
-            if (midiPlayer && midiPlayer.start) { // midiPlayer memiliki metode start()
+            // Opsional: Mulai pemutar MIDI secara otomatis setelah semua dimuat
+            if (midiPlayer && midiPlayer.start) {
                 midiPlayer.start();
             }
+            // Opsional: Mulai pemutar WAV secara otomatis
+            if (audioPlayer.paused) {
+                audioPlayer.play().catch(e => console.warn("Autoplay of HTML audioPlayer blocked:", e));
+            }
+
 
         } catch (error) {
             console.error('Error generating music:', error);
@@ -243,7 +137,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Inisialisasi wavesurfer pertama kali agar elemen tersedia dan WaveSurfer aktif
-    // (Akan direfresh setiap kali ada generate baru)
     initOrUpdateWavesurfer();
 });
-```
