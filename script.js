@@ -210,10 +210,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // TANGANI AUDIO (MP3/WAV) UNTUK PLAYBACK DAN DOWNLOAD
             // ===========================================
             // URL audio sekarang adalah URL langsung dari server Flask
-            audioPlayer.src = `${BACKEND_API_URL}${wavUrl}`;
+            audioPlayer.src = wavUrl; // Hapus ${BACKEND_API_URL}
             audioPlayer.load();
 
-            downloadLink.href = `${BACKEND_API_URL}${wavUrl}`;
+            downloadLink.href = wavUrl; // Hapus ${BACKEND_API_URL}
             downloadLink.download = wavUrl.endsWith('.mp3') ? 'generated_instrumental.mp3' : 'generated_instrumental.wav';
 
 
