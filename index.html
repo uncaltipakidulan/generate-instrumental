@@ -13,15 +13,15 @@
 
     <!-- Penting: meta tag CSP harus di awal head, sebelum script lain -->
     <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self' data:;
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net;
-        connect-src 'self' https://dindwwctyp.a.pinggy.link data:; /* PENTING untuk fetch ke backend dan data: untuk Wavesurfer/MidiPlayer */
-        img-src 'self' data:;
-        style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net;
-        font-src 'self' data:;
-        media-src 'self' data: blob:;
-        worker-src 'self' blob:;
-    ">
+    default-src 'self' data:;
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com; /* Tambahkan storage.googleapis.com jika ada script dari sana */
+    connect-src 'self' https://dindwwctyp.a.pinggy.link data: https://storage.googleapis.com; /* PENTING: TAMBAHKAN storage.googleapis.com DI SINI */
+    img-src 'self' data:;
+    style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net;
+    font-src 'self' data:;
+    media-src 'self' data: blob: https://storage.googleapis.com; /* media-src juga perlu jika ada file media dari sana */
+    worker-src 'self' blob:;
+">
 
     <!-- Dependencies untuk html-midi-player: Tone.js dan Magenta.js -->
     <!-- Menggunakan jalur combine yang benar dari JSDelivr -->
