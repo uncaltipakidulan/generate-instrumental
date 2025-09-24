@@ -7,13 +7,14 @@
     <!-- Tailwind CSS (untuk styling cepat) -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Custom CSS Anda -->
-    <link rel="stylesheet" href="./style.css">
-
+    <link rel="stylesheet" href="./style.css"
     <!-- Sertakan html-midi-player untuk MIDI Player dan visualisasi piano roll (dari CDN) -->
     <script type="module" src="https://cdn.jsdelivr.net/npm/@magenta/music@1.23.1/es6/core.js"></script>
     <script type="module" src="https://cdn.jsdelivr.net/npm/html-midi-player@1.6.0/dist/bundle.js"></script>
     <!-- Sertakan Wavesurfer.js untuk visualisasi waveform (PENTING!) -->
     <script src="https://unpkg.com/wavesurfer.js"></script>
+
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://unpkg.com https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net;">
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
