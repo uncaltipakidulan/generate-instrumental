@@ -2,6 +2,16 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self' data: https://storage.googleapis.com; /* Izinkan data: dan storage.googleapis.com secara global */
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
+    connect-src 'self' https://dindwwctyp.a.pinggy.link data: https://storage.googleapis.com; /* PASTIKAN storage.googleapis.com ADA DI SINI */
+    img-src 'self' data: https://storage.googleapis.com;
+    style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
+    font-src 'self' data: https://storage.googleapis.com;
+    media-src 'self' data: blob: https://storage.googleapis.com;
+    worker-src 'self' blob:;
+">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text to Instrumental Generator</title>
     <!-- Tailwind CSS (untuk styling cepat) -->
