@@ -2,6 +2,12 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Instrumental Generator</title>
+    <!-- Tailwind CSS (untuk styling cepat) -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Custom CSS Anda -->
+    <link rel="stylesheet" href="./style.css">
     <meta http-equiv="Content-Security-Policy" content="
     default-src 'self' data: https://storage.googleapis.com; /* Izinkan data: dan storage.googleapis.com secara global */
     script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
@@ -12,27 +18,6 @@
     media-src 'self' data: blob: https://storage.googleapis.com;
     worker-src 'self' blob:;
 ">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text to Instrumental Generator</title>
-    <!-- Tailwind CSS (untuk styling cepat) -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Custom CSS Anda -->
-    <link rel="stylesheet" href="./style.css">
-
-    <!-- *** KONFIGURASI SCRIPT JAVASCRIPT UNTUK html-midi-player dan Wavesurfer *** -->
-
-    <!-- Penting: meta tag CSP harus di awal head, sebelum script lain -->
-    <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self' data:;
-    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com; /* Tambahkan storage.googleapis.com jika ada script dari sana */
-    connect-src 'self' https://dindwwctyp.a.pinggy.link data: https://storage.googleapis.com; /* PENTING: TAMBAHKAN storage.googleapis.com DI SINI */
-    img-src 'self' data:;
-    style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net;
-    font-src 'self' data:;
-    media-src 'self' data: blob: https://storage.googleapis.com; /* media-src juga perlu jika ada file media dari sana */
-    worker-src 'self' blob:;
-">
-
     <!-- Dependencies untuk html-midi-player: Tone.js dan Magenta.js -->
     <!-- Menggunakan jalur combine yang benar dari JSDelivr -->
     <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.6.0/dist/midi-player.min.js"></script>
