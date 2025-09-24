@@ -17,15 +17,15 @@
     
     <!-- Penting: meta tag CSP harus di awal head, sebelum script lain -->
     <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self' data:;
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
-        connect-src 'self' https://dindwwctyp.a.pinggy.link data: https://storage.googleapis.com;
-        img-src 'self' data: https://storage.googleapis.com;
-        style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
-        font-src 'self' data: https://storage.googleapis.com;
-        media-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link; /* Tambahkan URL backend untuk file audio */
-        worker-src 'self' blob:;
-    ">
+    default-src 'self' data: https://storage.googleapis.com;
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com blob:; /* PENTING: TAMBAHKAN blob: DI SINI */
+    connect-src 'self' https://dindwwctyp.a.pinggy.link data: https://storage.googleapis.com;
+    img-src 'self' data: https://storage.googleapis.com;
+    style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
+    font-src 'self' data: https://storage.googleapis.com;
+    media-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
+    worker-src 'self' blob:;
+">
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
