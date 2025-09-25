@@ -4,18 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text to Instrumental Generator</title>
-    <!-- Tailwind CSS (untuk styling cepat) -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Custom CSS Anda -->
     <link rel="stylesheet" href="./style.css">
-
-    <!-- Dependencies untuk html-midi-player: Tone.js dan Magenta.js -->
     <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.6.0/dist/midi-player.min.js"></script>
-
-    <!-- Load Wavesurfer.js secara LOKAL -->
     <script src="./wavesurfer.js"></script>
-
-    <!-- Content Security Policy - VERSI YANG SUDAH DIBERSIHKAN -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self' data: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
         script-src 'self' 'unsafe-inline' 'unsafe-eval' 
@@ -55,15 +47,13 @@
                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline resize-y min-h-[100px]" 
                       placeholder="Teks atau lirik lagu yang akan diubah menjadi instrumental.&#10;Contoh:&#10;[intro]&#10;Ini adalah intro&#10;[verse 1]&#10;Ini adalah verse pertama&#10;[chorus]&#10;Ini adalah chorus"></textarea>
         </div>
-
-        <!-- Tambahan: Input untuk Pemilihan Genre -->
         <div class="mb-4">
             <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">
                 Pilih Genre Musik:
             </label>
             <select id="genreSelect"
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="auto">Otomatis (Analisis Lirik)</option>
+                <option value="auto">Otomatis</option>
                 <option value="pop">Pop</option>
                 <option value="rock">Rock</option>
                 <option value="metal">Metal</option>
@@ -71,8 +61,6 @@
                 <option value="blues">Blues</option>
             </select>
         </div>
-
-        <!-- Tambahan: Input untuk Pemilihan Tempo -->
         <div class="mb-6">
             <label for="tempoSlider" class="block text-gray-700 text-sm font-bold mb-2">
                 Tempo (BPM): <span id="tempoValue">Auto</span>
