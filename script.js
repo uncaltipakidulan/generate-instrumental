@@ -138,130 +138,196 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // === Event Listener untuk Tombol Generate ===
-    generateBtn.addEventListener('click', async () => {
-        const lyrics = lyricsInput.value.trim();
-        const selectedGenre = genreSelect.value;
-        const selectedTempo = tempoSlider.value === "0" ? "auto" : tempoSlider.value; // BARU: Ambil nilai tempo
+// === Event Listener untuk Tombol Generate ===
+generateBtn.addEventListener('click', async () => {
+    const lyrics = lyricsInput.value.trim();
+    const selectedGenre = genreSelect.value;
+    const selectedTempo = tempoSlider.value === "0" ? "auto" : tempoSlider.value;
 
-        if (!lyrics) {
-            hideAllOutput();
-            errorMessageSpan.textContent = 'Mohon masukkan lirik untuk membuat instrumental!';
-            errorDiv.classList.remove('hidden');
-            return;
-        }
-
+    if (!lyrics) {
         hideAllOutput();
-        loadingDiv.classList.remove('hidden');
-        generateBtn.disabled = true;
-        generateBtn.textContent = 'Membuat Instrumental...';
+        errorMessageSpan.textContent = 'Mohon masukkan lirik untuk membuat instrumental!';
+        errorDiv.classList.remove('hidden');
+        return;
+    }
 
-        try {
-            // Memulai AudioContext Tone.js sesegera mungkin pada user gesture
-            if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
-                try {
-                    await Tone.start();
-                    console.log('AudioContext started by Tone.js on user gesture.');
-                } catch (e) {
-                    console.error("Failed to start Tone.js AudioContext on user gesture:", e);
-                    errorMessageSpan.textContent = `Gagal memulai audio: ${e.message}. Coba lagi.`;
-                    errorDiv.classList.remove('hidden');
-                    loadingDiv.classList.add('hidden');
-                    generateBtn.disabled = false;
-                    generateBtn.textContent = 'Buat Instrumental';
-                    return;
-                }
+    hideAllOutput();
+    loadingDiv.classList.remove('hidden');
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Membuat Instrumental...';
+
+    try {
+        // AudioContext handling (tetap sama)
+        if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
+            try {
+                await Tone.start();
+                console.log('AudioContext started by Tone.js on user gesture.');
+            } catch (e) {
+                console.error("Failed to start Tone.js AudioContext on user gesture:", e);
+                errorMessageSpan.textContent = `Gagal memulai audio: ${e.message}. Coba lagi.`;
+                errorDiv.classList.remove('hidden');
+                loadingDiv.classList.add('hidden');
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Buat Instrumental';
+                return;
             }
-            // Pastikan AudioContext untuk HTML audio element juga resume
-            // Ini diperlukan karena Tone.start() mungkin tidak mempengaruhi semua AudioContext
-            if (audioPlayer.getContext && audioPlayer.getContext().state === 'suspended') {
-                 audioPlayer.getContext().resume().catch(e => console.warn("Failed to resume HTML audio context:", e));
-            } else if (audioPlayer.mozAudioChannel && audioPlayer.mozAudioChannel.context && audioPlayer.mozAudioChannel.context.state === 'suspended') {
-                 audioPlayer.mozAudioChannel.context.resume().catch(e => console.warn("Failed to resume HTML audio context (Firefox):", e));
-            }
-
-
-            const response = await fetch(`${BACKEND_API_URL}/generate-instrumental`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: lyrics, genre: selectedGenre, tempo: selectedTempo }), // BARU: Kirim tempo
-            });
-
-            if (!response.ok) {
-                let errorDetails = 'Terjadi kesalahan yang tidak diketahui.';
-                try {
-                    const errorData = await response.json();
-                    errorDetails = errorData.error || `HTTP error! status: ${response.status}`;
-                } catch (jsonError) {
-                    errorDetails = `Error ${response.status}: ${response.statusText || 'Gagal memparsing respons error.'}`;
-                }
-                throw new Error(errorDetails);
-            }
-
-            const data = await response.json();
-            const wavUrl = data.wav_url; // BARU: Backend mengembalikan URL, bukan base64
-            const midiUrl = data.midi_url; // BARU: Backend mengembalikan URL, bukan base64
-
-            if (!wavUrl || !midiUrl) {
-                throw new Error("Respons backend tidak lengkap (missing WAV/MP3 or MIDI URL).");
-            }
-
-            // ===========================================
-            // TANGANI AUDIO (MP3/WAV) UNTUK PLAYBACK DAN DOWNLOAD
-            // ===========================================
-            // URL audio sekarang adalah URL langsung dari server Flask
-            audioPlayer.src = wavUrl; // Hapus ${BACKEND_API_URL}
-            audioPlayer.load();
-
-            downloadLink.href = wavUrl; // Hapus ${BACKEND_API_URL}
-            downloadLink.download = wavUrl.endsWith('.mp3') ? 'generated_instrumental.mp3' : 'generated_instrumental.wav';
-
-
-            // ===========================================
-            // TANGANI MIDI UNTUK PLAYER DAN VISUALIZER
-            // ===========================================
-            // URL MIDI sekarang adalah URL langsung dari server Flask
-            if (midiPlayer) {
-                midiPlayer.src = `${BACKEND_API_URL}${midiUrl}`;
-            }
-            if (midiVisualizer) {
-                midiVisualizer.src = `${BACKEND_API_URL}${midiUrl}`;
-            }
-            downloadMidiLink.href = `${BACKEND_API_URL}${midiUrl}`;
-            downloadMidiLink.download = 'generated_instrumental.mid';
-
-            // ===========================================
-            // TANGANI WAVESURFER
-            // ===========================================
-            initOrUpdateWavesurfer();
-            // Wavesurfer akan memuat dari URL file MP3/WAV
-            wavesurferInstance.load(`${BACKEND_API_URL}${wavUrl}`);
-
-            // Tampilkan seluruh area output musik
-            musicOutputDiv.classList.remove('hidden');
-            resultDiv.classList.remove('hidden');
-
-            // Opsional: Mulai pemutar MIDI secara otomatis setelah semua dimuat
-            if (midiPlayer && midiPlayer.start) {
-                midiPlayer.start();
-            }
-            // Opsional: Mulai pemutar WAV secara otomatis
-            if (audioPlayer.paused) {
-                audioPlayer.play().catch(e => console.warn("Autoplay of HTML audioPlayer blocked:", e));
-            }
-
-
-        } catch (error) {
-            console.error('Error generating music:', error);
-            errorMessageSpan.textContent = `Terjadi kesalahan: ${error.message || 'Server tidak merespons.'}`;
-            errorDiv.classList.remove('hidden');
-        } finally {
-            loadingDiv.classList.add('hidden');
-            generateBtn.disabled = false;
-            generateBtn.textContent = 'Buat Instrumental';
         }
-    });
+        
+        if (audioPlayer.getContext && audioPlayer.getContext().state === 'suspended') {
+             audioPlayer.getContext().resume().catch(e => console.warn("Failed to resume HTML audio context:", e));
+        } else if (audioPlayer.mozAudioChannel && audioPlayer.mozAudioChannel.context && 
+                   audioPlayer.mozAudioChannel.context.state === 'suspended') {
+             audioPlayer.mozAudioChannel.context.resume().catch(e => console.warn("Failed to resume HTML audio context (Firefox):", e));
+        }
 
-    // Inisialisasi wavesurfer pertama kali agar elemen tersedia dan WaveSurfer aktif
-    initOrUpdateWavesurfer();
+        // DEBUG: Log request details
+        console.log('=== GENERATE MUSIC REQUEST ===');
+        console.log('Backend URL:', BACKEND_API_URL);
+        console.log('Request payload:', { text: lyrics, genre: selectedGenre, tempo: selectedTempo });
+
+        const response = await fetch(`${BACKEND_API_URL}/generate-instrumental`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                // Tambahkan header untuk debugging
+                'X-Debug-Request': 'generate-instrumental'
+            },
+            body: JSON.stringify({ 
+                text: lyrics, 
+                genre: selectedGenre, 
+                tempo: selectedTempo 
+            })
+        });
+
+        // DEBUG: Log response details
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        console.log('Response headers:', [...response.headers.entries()]);
+
+        if (!response.ok) {
+            let errorDetails = 'Terjadi kesalahan yang tidak diketahui.';
+            try {
+                const errorData = await response.json();
+                console.error('Error response data:', errorData);
+                errorDetails = errorData.error || `HTTP error! status: ${response.status}`;
+            } catch (jsonError) {
+                console.error('Failed to parse error response as JSON:', jsonError);
+                errorDetails = `Error ${response.status}: ${response.statusText || 'Gagal memparsing respons error.'}`;
+            }
+            throw new Error(errorDetails);
+        }
+
+        const data = await response.json();
+        console.log('=== SUCCESSFUL RESPONSE ===');
+        console.log('Response data:', data);
+        console.log('wav_url:', data.wav_url);
+        console.log('midi_url:', data.midi_url);
+
+        const wavUrl = data.wav_url;
+        const midiUrl = data.midi_url;
+
+        if (!wavUrl || !midiUrl) {
+            throw new Error("Respons backend tidak lengkap (missing WAV/MP3 or MIDI URL).");
+        }
+
+        // ===========================================
+        // TANGANI AUDIO (MP3/WAV) UNTUK PLAYBACK DAN DOWNLOAD
+        // ===========================================
+        // SEMUA URL HARUS FULL URL, bukan path relatif
+        const fullWavUrl = wavUrl.startsWith('http') ? wavUrl : `${BACKEND_API_URL}${wavUrl}`;
+        const fullMidiUrl = midiUrl.startsWith('http') ? midiUrl : `${BACKEND_API_URL}${midiUrl}`;
+        
+        console.log('Full WAV URL:', fullWavUrl);
+        console.log('Full MIDI URL:', fullMidiUrl);
+
+        // Set audio player dengan full URL
+        audioPlayer.src = fullWavUrl;
+        audioPlayer.load();
+        console.log('Audio player src set to:', fullWavUrl);
+
+        // Set download link dengan full URL
+        downloadLink.href = fullWavUrl;
+        downloadLink.download = fullWavUrl.endsWith('.mp3') ? 'generated_instrumental.mp3' : 'generated_instrumental.wav';
+        console.log('Download link href set to:', fullWavUrl);
+
+        // ===========================================
+        // TANGANI MIDI UNTUK PLAYER DAN VISUALIZER
+        // ===========================================
+        if (midiPlayer) {
+            midiPlayer.src = fullMidiUrl;
+            console.log('MIDI player src set to:', fullMidiUrl);
+        }
+        if (midiVisualizer) {
+            midiVisualizer.src = fullMidiUrl;
+            console.log('MIDI visualizer src set to:', fullMidiUrl);
+        }
+        downloadMidiLink.href = fullMidiUrl;
+        downloadMidiLink.download = 'generated_instrumental.mid';
+        console.log('MIDI download link href set to:', fullMidiUrl);
+
+        // ===========================================
+        // TANGANI WAVESURFER
+        // ===========================================
+        initOrUpdateWavesurfer();
+        // Wavesurfer load dengan full URL
+        if (wavesurferInstance) {
+            wavesurferInstance.load(fullWavUrl);
+            console.log('Wavesurfer loading:', fullWavUrl);
+        }
+
+        // Tampilkan seluruh area output musik
+        musicOutputDiv.classList.remove('hidden');
+        resultDiv.classList.remove('hidden');
+
+        // Opsional: Mulai pemutar MIDI secara otomatis setelah semua dimuat
+        if (midiPlayer && midiPlayer.start) {
+            // Tunggu sebentar agar MIDI player siap
+            setTimeout(() => {
+                try {
+                    midiPlayer.start();
+                    console.log('MIDI player started');
+                } catch (e) {
+                    console.warn('Failed to start MIDI player:', e);
+                }
+            }, 500);
+        }
+
+        // Opsional: Mulai pemutar WAV secara otomatis (dengan user gesture check)
+        if (audioPlayer.paused && !audioPlayer.ended) {
+            try {
+                await audioPlayer.play();
+                console.log('Audio player autoplay started');
+            } catch (e) {
+                console.warn("Autoplay of HTML audioPlayer blocked:", e);
+                // Fallback: Tunggu user interaction
+                audioPlayer.addEventListener('click', () => {
+                    audioPlayer.play().catch(e => console.warn('Play after click failed:', e));
+                }, { once: true });
+            }
+        }
+
+        console.log('=== MUSIC GENERATION COMPLETE ===');
+
+    } catch (error) {
+        console.error('=== ERROR GENERATING MUSIC ===');
+        console.error('Error details:', error);
+        console.error('Error stack:', error.stack);
+        
+        errorMessageSpan.textContent = `Terjadi kesalahan: ${error.message || 'Server tidak merespons.'}`;
+        errorDiv.classList.remove('hidden');
+        
+        // Log tambahan untuk debugging
+        if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
+            console.error('NetworkError detected - possible causes:');
+            console.error('- Backend server not running');
+            console.error('- Pinggy tunnel down');
+            console.error('- CORS issues');
+            console.error('- CSP blocking connect-src');
+            console.error('- Firewall/network blocking');
+        }
+    } finally {
+        loadingDiv.classList.add('hidden');
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Buat Instrumental';
+    }
 });
