@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const tempoSlider = document.getElementById('tempoSlider');
     const tempoValueSpan = document.getElementById('tempoValue');
     const generateBtn = document.getElementById('generateBtn');
-    
+    // Tambahkan header untuk debugging
+'X-Debug-Request': 'generate-instrumental'
     // Status / Message elements
     const loadingDiv = document.getElementById('loadingDiv');
     const resultDiv = document.getElementById('resultDiv');
