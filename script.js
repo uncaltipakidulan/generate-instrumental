@@ -7,8 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tempoSlider = document.getElementById('tempoSlider');
     const tempoValueSpan = document.getElementById('tempoValue');
     const generateBtn = document.getElementById('generateBtn');
-    // Tambahkan header untuk debugging
-'X-Debug-Request': 'generate-instrumental'
+    
     // Status / Message elements
     const loadingDiv = document.getElementById('loadingDiv');
     const resultDiv = document.getElementById('resultDiv');
@@ -108,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (midiPlayer) {
             midiPlayer.src = '';
             midiPlayer.currentTime = 0; // Reset waktu
-            midiPlayer.stop(); // Pastikan pemutaran dihentikan
+            // midiPlayer.stop(); // Hapus ini, karena midiPlayer tidak punya metode stop()
         }
         if (midiVisualizer) {
             midiVisualizer.src = '';
@@ -209,8 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    // Tambahkan header untuk debugging
-                    'X-Debug-Request': 'generate-instrumental'
+                    // Hapus atau komentari ini: 'X-Debug-Request': 'generate-instrumental'
+                    // Karena ini menyebabkan masalah CORS
                 },
                 body: JSON.stringify({ 
                     text: lyrics, 
@@ -253,8 +252,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // ===========================================
             // Menggabungkan BACKEND_API_URL jika URL relatif
             // ===========================================
+            // Backend sekarang mengembalikan URL RELATIF. Kita perlu menggabungkannya dengan BACKEND_API_URL.
             const getFullUrl = (relativePath) => {
-                return relativePath.startsWith('http') ? relativePath : `${BACKEND_API_URL}${relativePath}`;
+                // Pastikan relativePath tidak dimulai dengan '/' ganda jika BACKEND_API_URL sudah punya '/'
+                const backendBase = BACKEND_API_URL.endsWith('/') ? BACKEND_API_URL.slice(0, -1) : BACKEND_API_URL;
+                const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+                return `${backendBase}${path}`;
             };
 
             const fullWavUrl = getFullUrl(wavUrl);
