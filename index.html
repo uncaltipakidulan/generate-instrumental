@@ -4,25 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text to Instrumental Generator</title>
+    <!-- Tailwind CSS (untuk styling cepat) -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Custom CSS Anda -->
     <link rel="stylesheet" href="./style.css">
+
+    <!-- Dependencies untuk html-midi-player: Tone.js dan Magenta.js -->
     <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.6.0/dist/midi-player.min.js"></script>
+
+    <!-- Load Wavesurfer.js secara LOKAL -->
     <script src="./wavesurfer.js"></script>
-<meta http-equiv="Content-Security-Policy" content="
-    default-src 'self' data: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
-    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com https://dindwwctyp.a.pinggy.link; /* Tambahkan blob: jika masih ada error terkait itu */
-    connect-src 'self' https://dindwwctyp.a.pinggy.link data: https://storage.googleapis.com;
-    img-src 'self' data: https://storage.googleapis.com;
-    style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
-    font-src 'self' data: https://storage.googleapis.com;
-    media-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
-    worker-src 'self' blob:;
-    object-src 'none';
-    base-uri 'self'; /* Tambahan untuk keamanan, jika tidak ada base-tag */
-    form-action 'self';
-    frame-ancestors 'none'; /* Jika Anda tidak ingin embedding */
-">
     
+    <!-- Penting: meta tag CSP harus di awal head, setelah meta charset -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self' data: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com blob:;
+        connect-src 'self' https://dindwwctyp.a.pinggy.link data: https://storage.googleapis.com;
+        img-src 'self' data:;
+        style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
+        font-src 'self' data: https://storage.googleapis.com;
+        media-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
+        worker-src 'self' blob:;
+        object-src 'none';
+    ">
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
@@ -38,9 +42,11 @@
                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline resize-y min-h-[100px]" 
                       placeholder="Teks atau lirik lagu yang akan diubah menjadi instrumental.&#10;Contoh:&#10;[intro]&#10;Ini adalah intro&#10;[verse 1]&#10;Ini adalah verse pertama&#10;[chorus]&#10;Ini adalah chorus"></textarea>
         </div>
+
+        <!-- Input untuk Pemilihan Genre -->
         <div class="mb-4">
             <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">
-                Pilih Genre Musik:
+                Pilih Genre:
             </label>
             <select id="genreSelect"
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
@@ -52,11 +58,13 @@
                 <option value="blues">Blues</option>
             </select>
         </div>
+
+        <!-- Input untuk Pemilihan Tempo -->
         <div class="mb-6">
             <label for="tempoSlider" class="block text-gray-700 text-sm font-bold mb-2">
                 Tempo (BPM): <span id="tempoValue">Auto</span>
             </label>
-            <input type="range" id="tempoSlider" min="60" max="200" value="0" step="1"
+            <input type="range" id="tempoSlider" min="49" max="200" value="0" step="1"
                    class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
         </div>
 
@@ -83,7 +91,7 @@
         <div id="musicOutputDiv" class="hidden mt-4">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Output Instrumental:</h2>
             
-            <!-- ====== BAGIAN AUDIO (WAV/MP3) ====== -->
+            <!-- ====== BAGIAN AUDIO (MP3) ====== -->
             <div id="audioPlayerContainer" class="mb-4">
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">Audio Playback:</h3>
                 <audio id="audioPlayer" controls class="w-full mb-2"></audio>
