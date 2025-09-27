@@ -303,19 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
             musicOutputDiv.classList.remove('hidden');
             resultDiv.classList.remove('hidden');
 
-            // Opsional: Mulai pemutar MIDI secara otomatis setelah semua dimuat
-            if (midiPlayer && midiPlayer.start) {
-                // Tunggu sebentar agar MIDI player siap
-                setTimeout(() => {
-                    try {
-                        midiPlayer.start();
-                        console.log('MIDI player started');
-                    } catch (e) {
-                        console.warn('Failed to start MIDI player:', e);
-                    }
-                }, 500);
-            }
-
             // Opsional: Mulai pemutar WAV secara otomatis (dengan user gesture check)
             if (audioPlayer.paused && !audioPlayer.ended) {
                 try {
