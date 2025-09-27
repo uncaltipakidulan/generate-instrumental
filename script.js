@@ -102,12 +102,13 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadLink.removeAttribute('download');
 
         // Reset MIDI player/visualizer
+        // ... di dalam fungsi hideAllOutput() ...
+
         if (midiPlayer) {
+       // midiPlayer.pause(); // <--- HAPUS BARIS INI ATAU KOMENTARI!
+            midiPlayer.currentTime = 0;
             midiPlayer.src = '';
-            midiPlayer.currentTime = 0; // Reset waktu
-            midiPlayer.pause(); // BARU: Pause secara eksplisit
-            midiPlayer.removeAttribute('disabled'); // Pastikan tidak disabled
-            // midiPlayer.stop(); // Hapus ini, karena midiPlayer tidak punya metode stop()
+       // midiPlayer.setAttribute('disabled', 'true'); // Ini juga tidak perlu jika src dihapus
         }
         if (midiVisualizer) {
             midiVisualizer.src = '';
