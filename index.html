@@ -4,52 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text to Instrumental Generator</title>
-    <!-- Tailwind CSS (untuk styling cepat) -->
+    <!-- Tailwind CSS (ganti ke built CSS untuk production) -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Custom CSS Anda -->
     <link rel="stylesheet" href="./style.css">
-
-    <!-- Dependencies untuk html-midi-player: Tone.js dan Magenta.js -->
+    
+    <!-- Preload untuk performa (opsional) -->
+    <link rel="preload" href="./wavesurfer.js" as="script">
+    
+    <!-- Dependencies: Tone.js, Magenta.js, html-midi-player -->
     <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.6.0/dist/midi-player.min.js"></script>
-
-    <!-- Load Wavesurfer.js secara LOKAL -->
     <script src="./wavesurfer.js"></script>
     
-    <!-- Penting: meta tag CSP harus di awal head, setelah meta charset -->
+    <!-- CSP: Tambah GitHub Pages dan blob untuk audio -->
     <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self' data: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
+        default-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link https://uncaltipakidulan.github.io;
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com blob:;
-        connect-src 'self' https://dindwwctyp.a.pinggy.link data: https://storage.googleapis.com;
-        img-src 'self' data:;
+        connect-src 'self' https://dindwwctyp.a.pinggy.link https://uncaltipakidulan.github.io data: https://storage.googleapis.com;
+        img-src 'self' data: blob:;
         style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
         font-src 'self' data: https://storage.googleapis.com;
-        media-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
+        media-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link https://uncaltipakidulan.github.io;
         worker-src 'self' blob:;
         object-src 'none';
     ">
+    
+    <!-- Tambah button untuk manual audio start (fix mobile) -->
+    <style>
+        #audioStartBtn { display: none; } /* Hidden by default */
+        @media (max-width: 768px) { #audioStartBtn { display: block; margin: 10px 0; } }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <!-- Tambah audio start button untuk mobile -->
+    <button id="audioStartBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full mb-4 hidden">
+        Mulai Audio (Tap untuk mobile)
+    </button>
 
     <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Text to Instrumental Generator</h1>
         <p class="text-gray-600 text-center mb-4">Masukkan lirik di bawah ini untuk menciptakan instrumental Anda!</p>
 
+        <!-- Input sections tetap sama -->
         <div class="mb-4">
-            <label for="lyricsInput" class="block text-gray-700 text-sm font-bold mb-2">
-                Masukkan Lirik atau Teks Anda:
-            </label>
-            <textarea id="lyricsInput" 
-                      class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline resize-y min-h-[100px]" 
+            <label for="lyricsInput" class="block text-gray-700 text-sm font-bold mb-2">Masukkan Lirik atau Teks Anda:</label>
+            <textarea id="lyricsInput" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline resize-y min-h-[100px]" 
                       placeholder="Teks atau lirik lagu yang akan diubah menjadi instrumental.&#10;Contoh:&#10;[intro]&#10;Ini adalah intro&#10;[verse 1]&#10;Ini adalah verse pertama&#10;[chorus]&#10;Ini adalah chorus"></textarea>
         </div>
 
-        <!-- Input untuk Pemilihan Genre -->
         <div class="mb-4">
-            <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">
-                Pilih Genre:
-            </label>
-            <select id="genreSelect"
-                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">Pilih Genre:</label>
+            <select id="genreSelect" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 <option value="auto">Otomatis</option>
                 <option value="pop">Pop</option>
                 <option value="rock">Rock</option>
@@ -59,21 +63,19 @@
             </select>
         </div>
 
-        <!-- Input untuk Pemilihan Tempo -->
         <div class="mb-6">
             <label for="tempoSlider" class="block text-gray-700 text-sm font-bold mb-2">
                 Tempo (BPM): <span id="tempoValue">Auto</span>
             </label>
             <input type="range" id="tempoSlider" min="49" max="200" value="0" step="1"
-                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
         </div>
 
-        <button id="generateBtn" 
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+        <button id="generateBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
             Generate Instrumental
         </button>
 
-        <!-- Area Pesan Loading (ID: loadingDiv, sesuai script.js) -->
+        <!-- Loading, result, output sections tetap sama -->
         <div id="loadingDiv" class="hidden mt-4 p-3 bg-blue-100 text-blue-800 rounded text-center flex items-center justify-center">
             <svg class="animate-spin h-5 w-5 mr-3 inline-block" viewBox="0 0 24 24" fill="currentColor">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -82,16 +84,13 @@
             Membuat instrumental Anda...
         </div>
 
-        <!-- Area Pesan Sukses/Hasil (ID: resultDiv, sesuai script.js) -->
         <div id="resultDiv" class="hidden mt-4 p-3 bg-green-100 text-green-800 rounded text-center">
             Instrumental berhasil dibuat!
         </div>
 
-        <!-- Wadah Output Musik Utama (ID: musicOutputDiv, sesuai script.js) -->
         <div id="musicOutputDiv" class="hidden mt-4">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Output Instrumental:</h2>
             
-            <!-- ====== BAGIAN AUDIO (MP3) ====== -->
             <div id="audioPlayerContainer" class="mb-4">
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">Audio Playback:</h3>
                 <audio id="audioPlayer" controls class="w-full mb-2"></audio>
@@ -100,21 +99,15 @@
                 </a>
             </div>
             
-            <!-- ====== VISUALISASI WAVEFORM ====== -->
             <div id="waveformContainer" class="mb-4">
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">Visualisasi Waveform:</h3>
                 <div id="waveform" style="width: 100%; height: 120px; border: 1px solid #d1d5db; border-radius: 5px;"></div>
             </div>
 
-            <!-- ====== BAGIAN MIDI PLAYER & VISUALIZER ====== -->
             <div id="midiPlayerContainer" class="mb-4">
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">MIDI Player (Piano Roll):</h3>
-                <midi-player id="midiPlayer"
-                             src=""
-                             sound-font
-                             visualizer="#midiVisualizer"
-                             class="w-full mb-2"
-                             style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 5px;">
+                <midi-player id="midiPlayer" src="" sound-font visualizer="#midiVisualizer" 
+                             class="w-full mb-2" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 5px;">
                 </midi-player>
                 
                 <midi-visualizer type="piano-roll" id="midiVisualizer" 
@@ -126,13 +119,11 @@
             </div>
         </div>
 
-        <!-- Area Pesan Error (ID: errorDiv, sesuai script.js) -->
         <div id="errorDiv" class="hidden mt-4 p-3 bg-red-100 text-red-800 rounded text-center">
             <strong>Terjadi Kesalahan:</strong> <span id="errorMessageSpan"></span>
         </div>
     </div>
 
-    <!-- Script aplikasi Anda -->
     <script src="./script.js" defer></script>
 </body>
 </html>
