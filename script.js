@@ -40,13 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fungsi untuk menginisialisasi atau memperbarui Wavesurfer
     const initOrUpdateWavesurfer = () => {
-        // Destroy existing instance if any
         if (wavesurferInstance) {
             wavesurferInstance.destroy();
             wavesurferInstance = null; // Clear reference
         }
         
-        // Ensure container is not null before creating Wavesurfer
         if (!waveformContainer) {
             console.error("Wavesurfer container #waveform not found!");
             return;
@@ -107,6 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (midiPlayer) {
             midiPlayer.src = '';
             midiPlayer.currentTime = 0; // Reset waktu
+            midiPlayer.pause(); // BARU: Pause secara eksplisit
+            midiPlayer.removeAttribute('disabled'); // Pastikan tidak disabled
             // midiPlayer.stop(); // Hapus ini, karena midiPlayer tidak punya metode stop()
         }
         if (midiVisualizer) {
@@ -118,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Reset Wavesurfer
         if (wavesurferInstance) {
+            wavesurferInstance.stop(); // Hentikan Wavesurfer jika bermain
             wavesurferInstance.empty();
         }
     };
@@ -252,7 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // ===========================================
             // Backend sekarang mengembalikan URL RELATIF. Kita perlu menggabungkannya dengan BACKEND_API_URL.
             const getFullUrl = (relativePath) => {
-                // Pastikan relativePath tidak dimulai dengan '/' ganda jika BACKEND_API_URL sudah punya '/'
                 const backendBase = BACKEND_API_URL.endsWith('/') ? BACKEND_API_URL.slice(0, -1) : BACKEND_API_URL;
                 const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
                 return `${backendBase}${path}`;
@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // TANGANI AUDIO (MP3/WAV) UNTUK PLAYBACK DAN DOWNLOAD
             // ===========================================
             audioPlayer.src = fullWavUrl;
-            audioPlayer.load();
+            audioPlayer.load(); // Memuat audio
             console.log('Audio player src set to:', fullWavUrl);
 
             downloadLink.href = fullWavUrl;
@@ -280,6 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // ===========================================
             if (midiPlayer) {
                 midiPlayer.src = fullMidiUrl;
+                midiPlayer.removeAttribute('disabled'); // Aktifkan lagi kontrol pemutar MIDI
                 console.log('MIDI player src set to:', fullMidiUrl);
             }
             if (midiVisualizer) {
