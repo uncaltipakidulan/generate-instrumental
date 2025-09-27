@@ -8,28 +8,20 @@
     <link rel="stylesheet" href="./style.css">
     <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.6.0/dist/midi-player.min.js"></script>
     <script src="./wavesurfer.js"></script>
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self' data: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' 
-            https://unpkg.com 
-            https://cdn.jsdelivr.net 
-            https://storage.googleapis.com 
-            https://dindwwctyp.a.pinggy.link 
-            blob:;
-        connect-src 'self' https://dindwwctyp.a.pinggy.link data: https://storage.googleapis.com;
-        img-src 'self' data: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
-        style-src 'self' 'unsafe-inline' 
-            https://unpkg.com 
-            https://cdn.jsdelivr.net 
-            https://storage.googleapis.com 
-            https://dindwwctyp.a.pinggy.link;
-        font-src 'self' data: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
-        media-src 'self' data: blob: 
-            https://storage.googleapis.com 
-            https://dindwwctyp.a.pinggy.link;
-        worker-src 'self' blob: https://dindwwctyp.a.pinggy.link;
-        object-src 'none';
-    ">
+<meta http-equiv="Content-Security-Policy" content="
+    default-src 'self' data: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com https://dindwwctyp.a.pinggy.link; /* Tambahkan blob: jika masih ada error terkait itu */
+    connect-src 'self' https://dindwwctyp.a.pinggy.link data: https://storage.googleapis.com;
+    img-src 'self' data: https://storage.googleapis.com;
+    style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
+    font-src 'self' data: https://storage.googleapis.com;
+    media-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link;
+    worker-src 'self' blob:;
+    object-src 'none';
+    base-uri 'self'; /* Tambahan untuk keamanan, jika tidak ada base-tag */
+    form-action 'self';
+    frame-ancestors 'none'; /* Jika Anda tidak ingin embedding */
+">
     
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
