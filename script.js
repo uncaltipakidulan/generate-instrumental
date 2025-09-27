@@ -105,10 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // ... di dalam fungsi hideAllOutput() ...
 
         if (midiPlayer) {
-       // midiPlayer.pause(); // <--- HAPUS BARIS INI ATAU KOMENTARI!
             midiPlayer.currentTime = 0;
             midiPlayer.src = '';
-       // midiPlayer.setAttribute('disabled', 'true'); // Ini juga tidak perlu jika src dihapus
+            midiPlayer.setAttribute('disabled', 'true'); 
         }
         if (midiVisualizer) {
             midiVisualizer.src = '';
