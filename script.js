@@ -303,20 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
             musicOutputDiv.classList.remove('hidden');
             resultDiv.classList.remove('hidden');
 
-            // Opsional: Mulai pemutar WAV secara otomatis (dengan user gesture check)
-            if (audioPlayer.paused && !audioPlayer.ended) {
-                try {
-                    await audioPlayer.play();
-                    console.log('Audio player autoplay started');
-                } catch (e) {
-                    console.warn("Autoplay of HTML audioPlayer blocked:", e);
-                    // Fallback: Tunggu user interaction
-                    audioPlayer.addEventListener('click', () => {
-                        audioPlayer.play().catch(e => console.warn('Play after click failed:', e));
-                    }, { once: true });
-                }
-            }
-
             console.log('=== MUSIC GENERATION COMPLETE ===');
 
         } catch (error) {
