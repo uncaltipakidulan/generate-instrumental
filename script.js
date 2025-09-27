@@ -208,8 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    // Hapus atau komentari ini: 'X-Debug-Request': 'generate-instrumental'
-                    // Karena ini menyebabkan masalah CORS
                 },
                 body: JSON.stringify({ 
                     text: lyrics, 
