@@ -6,15 +6,15 @@
     <title>Text to Instrumental Generator</title>
     <!-- Tailwind CSS (ganti ke built CSS untuk production) -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="./style.css">
-    
+    <link rel="stylesheet" href="./style.css"> 
     <!-- Preload untuk performa (opsional) -->
     <link rel="preload" href="./wavesurfer.js" as="script">
-    
+    <!-- Wavesurfer Plugins CDN - Load terpisah untuk minimap & timeline -->
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/minimap.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.js"></script>
     <!-- Dependencies: Tone.js, Magenta.js, html-midi-player -->
     <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.6.0/dist/midi-player.min.js"></script>
-    <script src="./wavesurfer.js"></script>
-    
+    <script src="./wavesurfer.js"></script>  
     <!-- CSP: Tambah GitHub Pages dan blob untuk audio -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link https://uncaltipakidulan.github.io;
