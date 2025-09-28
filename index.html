@@ -124,13 +124,13 @@
             
             <!-- ====== VISUALISASI WAVEFORM ====== -->
             <!-- Tambahkan div untuk timeline dan minimap agar plugin memiliki container terpisah -->
+
             <div id="waveformContainer" class="mb-4">
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">Visualisasi Waveform:</h3>
                 <div id="waveform" style="width: 100%; height: 120px; border: 1px solid #d1d5db; border-radius: 5px;"></div>
                 <div id="waveform-timeline" style="width: 100%; height: 20px; margin-top: 5px;"></div>
                 <div id="waveform-minimap" style="width: 100%; height: 40px; margin-top: 5px;"></div>
             </div>
-
             <!-- ====== BAGIAN MIDI PLAYER & VISUALIZER ====== -->
             <div id="midiPlayerContainer" class="mb-4">
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">MIDI Player (Piano Roll):</h3>
@@ -139,6 +139,8 @@
                              sound-font
                              visualizer="#midiVisualizer"
                              class="w-full mb-2"
+                             controls="false"
+                             disable-controls
                              style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 5px;">
                 </midi-player>
                 
