@@ -400,12 +400,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('File audio/MIDI tidak lengkap dari server.');
                 }
 
-                // Build full URLs
-                const getFullUrl = (url) => {
-                    if (url.startsWith('http')) return url;
-                    const base = BACKEND_API_URL.endsWith('/') ? BACKEND_API_URL.slice(0, -1) : BACKEND_API_URL;
-                    // Pastikan path tidak double slash jika url sudah diawali slash
-                    return `${base}${url.startsWith('/') ? url : '/' + url}`;
+                // Di dalam generateBtn.addEventListener('click', async () => { ... }
+               const getFullUrl = (url) => {
+               if (url.startsWith('http')) return url;  // Already absolute
+               const base = BACKEND_API_URL.endsWith('/') ? BACKEND_API_URL.slice(0, -1) : BACKEND_API_URL;
+               const path = url.startsWith('/') ? url : `/${url}`;
+               return `${base}${path}`;
                 };
 
                 const fullAudioUrl = getFullUrl(audioUrl);
