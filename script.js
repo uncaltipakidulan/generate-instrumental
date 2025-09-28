@@ -485,9 +485,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 let userMsg = error.message || 'Error tidak diketahui.';
                 if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    userMsg = `Tidak bisa connect ke ${BACKEND_API_URL}. Cek: Flask running? Pinggy aktif?`;
+                    userMsg = `Tidak bisa terhubung ke server!`;
                 } else if (error.message.includes('NetworkError')) {
-                    userMsg = 'Koneksi gagal. Restart tunnel: ssh -R0:localhost:5000 a.pinggy.io';
+                    userMsg = 'Koneksi gagal!';
                 } else if (error.message.includes('mp3_file_path')) {
                     userMsg = 'Error backend: Konversi MP3 gagal. Periksa FFmpeg path dan SoundFont di Windows.';
                 }
