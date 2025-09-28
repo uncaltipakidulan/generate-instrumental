@@ -1,5 +1,4 @@
 // script.js - VERSI TERBARU DAN TERBAIK
-// Mengatasi midiPlayer.pause is not a function dan Wavesurfer plugin errors
 
 document.addEventListener('DOMContentLoaded', () => {
     // === 1. DOM ELEMENTS ===
@@ -29,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Backend URL - Auto-detect local vs production
     const BACKEND_API_URL = window.location.hostname.includes('github.io') 
-        ? 'https://dindwwctyp.a.pinggy.link'
+        ? 'https://dindwwctyp.a.pinggy.link' // Ganti jika URL Pinggy Anda berubah
         : 'http://localhost:5000';
 
     let wavesurferInstance = null;
@@ -79,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // FIXED: Safe MIDI Player Controls (no .pause() method)
+    // FIXED: Safe MIDI Player Controls
     const safeMidiControl = (action) => {
         if (!midiPlayer) {
             console.warn('MIDI Player element not found for action:', action);
@@ -89,24 +88,22 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             switch (action) {
                 case 'play':
-                    // html-midi-player has a .start() method for playback
                     if (midiPlayer.start) {
                         midiPlayer.start();
-                    } else if (midiPlayer.currentTime !== midiPlayer.duration) {
-                        // Fallback if start() is not directly available or needs interaction
-                        const playBtn = midiPlayer.shadowRoot?.querySelector('button[title="Play"], .play-button');
+                    } else if (midiPlayer.shadowRoot) { // Check for shadowRoot
+                        const playBtn = midiPlayer.shadowRoot.querySelector('button[title="Play"], .play-button');
                         if (playBtn) playBtn.click();
                     }
                     console.log('▶️ MIDI Play triggered');
                     break;
                     
                 case 'pause':
-                    // html-midi-player controls playback state via 'paused' property
-                    // setting midiPlayer.paused = true also triggers the internal pause mechanism
                     if (midiPlayer.paused === false) { // Only pause if it's currently playing
                         midiPlayer.paused = true;
-                        const pauseBtn = midiPlayer.shadowRoot?.querySelector('button[title="Pause"], .pause-button');
-                        if (pauseBtn) pauseBtn.click(); // Trigger button click as fallback/redundancy
+                        if (midiPlayer.shadowRoot) { // Check for shadowRoot
+                            const pauseBtn = midiPlayer.shadowRoot.querySelector('button[title="Pause"], .pause-button');
+                            if (pauseBtn) pauseBtn.click(); // Trigger button click as fallback/redundancy
+                        }
                     }
                     console.log('⏸️ MIDI Pause triggered (safe mode)');
                     break;
@@ -121,8 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                 case 'reset':
                     safeMidiControl('stop');
-                    if (midiPlayer.src) midiPlayer.src = '';
-                    if (midiVisualizer) midiVisualizer.src = '';
+                    midiPlayer.src = ''; // Clear src attribute
+                    midiVisualizer.src = ''; // Clear src attribute
                     midiPlayer.removeAttribute('src'); // Clear src attribute
                     midiVisualizer.removeAttribute('src'); // Clear src attribute
                     midiPlayer.style.opacity = '0.5'; // Keep it disabled visually
@@ -136,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // FIXED: Wavesurfer Init with Minimap & Timeline (using CDN-loaded plugins)
     const initOrUpdateWavesurfer = () => {
+        // Destroy existing instance BEFORE creating a new one
         if (wavesurferInstance) {
             wavesurferInstance.destroy();
             wavesurferInstance = null;
@@ -160,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
                 console.log('✅ Wavesurfer Minimap plugin loaded.');
             } else {
-                console.warn('⚠️ Wavesurfer Minimap plugin NOT found.');
+                console.warn('⚠️ Wavesurfer Minimap plugin NOT found (via type check).');
             }
 
             // Add Timeline plugin if available
@@ -175,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
                 console.log('✅ Wavesurfer Timeline plugin loaded.');
             } else {
-                console.warn('⚠️ Wavesurfer Timeline plugin NOT found.');
+                console.warn('⚠️ Wavesurfer Timeline plugin NOT found (via type check).');
             }
 
             wavesurferInstance = WaveSurfer.create({
@@ -236,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // FIXED: Safe Reset Function (no more midiPlayer.pause crash)
+    // FIXED: Safe Reset Function
     const hideAllOutput = () => {
         console.log('🔄 Resetting all outputs...');
         
@@ -467,8 +465,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial setup
     initializeAudioContext().then(() => {
-        initOrUpdateWavesurfer();
-        safeMidiControl('reset'); // Ensure clean start
+        // Init Wavesurfer after AudioContext is ready
+        initOrUpdateWavesurfer(); 
+        safeMidiControl('reset');
         console.log('🎵 App ready! AudioContext:', audioContextReady);
     });
 
