@@ -78,8 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Safe MIDI Player Controls (for visual synchronization only)
-    // Sekarang kita akan menggunakan start()/pause() langsung di event listeners audioPlayer
-    // Ini adalah versi yang lebih sederhana, tidak perlu memfilter aksi
     const safeMidiControl = (action) => {
         if (!midiPlayer) {
             console.warn('MIDI Player element not found for action:', action);
@@ -88,29 +86,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             switch (action) {
-                case 'reset':
-                    if (midiPlayer.start) midiPlayer.stop(); // Stop jika ada
-                    midiPlayer.src = ''; // Clear src attribute
-                    midiVisualizer.src = ''; // Clear src attribute
-                    midiPlayer.removeAttribute('src'); // Clear src attribute
-                    midiVisualizer.removeAttribute('src'); // Clear src attribute
-                    midiPlayer.style.opacity = '0.5'; // Keep it disabled visually
-                    midiPlayer.currentTime = 0; // Reset waktu
-                    console.log('🔄 MIDI Player reset');
+                case 'play':
+                    midiPlayer.paused = false; // Set properti paused ke false untuk play
+                    console.log('▶️ MIDI Play triggered (visual sync only)');
                     break;
-                case 'play': // Tidak dipanggil langsung lagi
-                case 'pause': // Tidak dipanggil langsung lagi
-                case 'stop': // Tidak dipanggil langsung lagi
-                default:
-                    console.warn(`Aksi MIDI kontrol tidak langsung ditangani: ${action}`);
+                    
+                case 'pause':
+                    midiPlayer.paused = true; // Set properti paused ke true untuk pause
+                    console.log('⏸️ MIDI Pause triggered (safe mode)');
+                    break;
+                    
+                case 'stop':
+                    midiPlayer.currentTime = 0; // Reset waktu
+                    midiPlayer.paused = true; // Set properti paused ke true untuk stop
+                    console.log('⏹️ MIDI Stop triggered');
+                    break;
+                    
+                case 'reset':
+                    midiPlayer.currentTime = 0;
+                    midiPlayer.paused = true; // Set properti paused ke true
+                    midiPlayer.src = ''; 
+                    midiVisualizer.src = ''; 
+                    midiPlayer.removeAttribute('src'); 
+                    midiVisualizer.removeAttribute('src'); 
+                    midiPlayer.style.opacity = '0.5'; 
+                    console.log('🔄 MIDI Player reset');
                     break;
             }
         } catch (error) {
-            console.error(`❌ MIDI Control error (${action}):`, error);
+            // Tangkap error jika properti 'paused' atau 'currentTime' belum tersedia
+            console.error(`❌ MIDI Control error (${action}): ${error.message}. MIDI Player state may not be fully initialized.`, error);
+            // Fallback: coba paksa ulang jika ada masalah
+            if (midiPlayer.paused === undefined) {
+                 console.warn("midiPlayer.paused is undefined. Retrying MIDI Player initialization state.");
+                 midiPlayer.currentTime = 0;
+                 midiPlayer.paused = true; // Coba set lagi
+            }
         }
     };
 
-    // Wavesurfer Init with Minimap & Timeline (using CDN-loaded plugins)
+    // Wavesurfer Init (tanpa plugin minimap/timeline untuk menghindari warning)
     const initOrUpdateWavesurfer = () => {
         // Destroy existing instance BEFORE creating a new one
         if (wavesurferInstance) {
@@ -124,36 +139,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const plugins = [];
-            // Add Minimap plugin if available
+            // KOSONGKAN ARRAY PLUGIN untuk menghilangkan warning "NOT found"
+            const plugins = []; 
+            // Jika Anda berhasil memuat plugin secara eksternal (CDN) dan ingin menggunakannya,
+            // uncomment bagian ini dan pastikan WaveSurfer.minimap/timeline sudah didefinisikan.
+            /*
             if (typeof WaveSurfer.minimap !== 'undefined') {
-                plugins.push(
-                    WaveSurfer.minimap.create({
-                        height: 30,
-                        waveColor: '#ddd',
-                        progressColor: '#999',
-                        container: '#waveform-minimap' // Pastikan #waveform-minimap ada di HTML
-                    })
-                );
-                console.log('✅ Wavesurfer Minimap plugin loaded.');
-            } else {
-                console.warn('⚠️ Wavesurfer Minimap plugin NOT found (via type check).');
-            }
-
-            // Add Timeline plugin if available
+                plugins.push(WaveSurfer.minimap.create({
+                    height: 30, waveColor: '#ddd', progressColor: '#999', container: '#waveform-minimap'
+                })); console.log('✅ Wavesurfer Minimap plugin loaded.');
+            } else { console.warn('⚠️ Wavesurfer Minimap plugin NOT found (via type check).'); }
             if (typeof WaveSurfer.timeline !== 'undefined') {
-                plugins.push(
-                    WaveSurfer.timeline.create({
-                        container: '#waveform-timeline', // Pastikan #waveform-timeline ada di HTML
-                        timeInterval: 0.5,
-                        height: 20,
-                        primaryFontColor: '#000'
-                    })
-                );
-                console.log('✅ Wavesurfer Timeline plugin loaded.');
-            } else {
-                console.warn('⚠️ Wavesurfer Timeline plugin NOT found (via type check).');
-            }
+                plugins.push(WaveSurfer.timeline.create({
+                    container: '#waveform-timeline', timeInterval: 0.5, height: 20, primaryFontColor: '#000'
+                })); console.log('✅ Wavesurfer Timeline plugin loaded.');
+            } else { console.warn('⚠️ Wavesurfer Timeline plugin NOT found (via type check).'); }
+            */
 
             wavesurferInstance = WaveSurfer.create({
                 container: waveformContainer,
@@ -167,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 interact: true,
                 backend: 'WebAudio',
                 media: audioPlayer, // PENTING: Sambungkan langsung ke elemen HTML audio
-                plugins: plugins
+                plugins: plugins // Gunakan array plugins yang sudah diisi (atau kosong)
             });
 
             // Event listeners untuk sync playback
@@ -181,8 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // HTML Audio actions -> Wavesurfer
-            audioPlayer.addEventListener('play', () => { if (!wavesurferInstance.isPlaying()) wavesurferInstance.play(); });
-            audioPlayer.addEventListener('pause', () => { if (wavesurferInstance.isPlaying()) wavesurferInstance.pause(); });
+            audioPlayer.addEventListener('play', () => { if (wavesurferInstance && !wavesurferInstance.isPlaying()) wavesurferInstance.play(); });
+            audioPlayer.addEventListener('pause', () => { if (wavesurferInstance && wavesurferInstance.isPlaying()) wavesurferInstance.pause(); });
             audioPlayer.addEventListener('seeked', () => {
                 if (audioPlayer.duration && wavesurferInstance) {
                     wavesurferInstance.seekTo(audioPlayer.currentTime / audioPlayer.duration);
@@ -296,18 +297,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // MIDI Player Event Listeners (for visual only)
+    // MIDI Player Event Listeners (untuk visual saja)
     if (midiPlayer) {
-        midiPlayer.addEventListener('load', () => { // Gunakan 'load' untuk html-midi-player
-            midiPlayer.style.opacity = '1';
+        midiPlayer.addEventListener('load', () => { // Gunakan 'load' bukan 'canplay' untuk html-midi-player
+            midiPlayer.style.opacity = '1'; // Pastikan terlihat
             console.log('✅ MIDI loaded and ready to play (visual).');
-            // Pastikan MIDI player juga diatur ke paused jika audioPlayer sedang dijeda
-            if (audioPlayer.paused) {
-                midiPlayer.pause();
+            // Setelah dimuat, jika audioPlayer sedang play, kita harus sync
+            if (!audioPlayer.paused) {
+                midiPlayer.paused = false; // Start visual MIDI
+                midiPlayer.currentTime = audioPlayer.currentTime; // Sinkronkan posisi awal
+                console.log('MIDI Player loaded, starting visual.');
             } else {
-                midiPlayer.start();
+                midiPlayer.paused = true; // Pause visual MIDI
+                console.log('MIDI Player loaded, pausing visual.');
             }
-            midiPlayer.currentTime = audioPlayer.currentTime; // Sinkronkan posisi awal
         });
 
         midiPlayer.addEventListener('error', (e) => {
@@ -315,38 +318,51 @@ document.addEventListener('DOMContentLoaded', () => {
             errorMessageSpan.textContent = 'Gagal memuat file MIDI. Periksa URL atau SoundFont.';
             errorDiv.classList.remove('hidden');
         });
-        
-        // --- SINKRONISASI BARU UNTUK MIDI PLAYER ---
-        // Kita tidak lagi memanggil midiPlayer.currentTime = audioPlayer.currentTime di timeupdate
-        // Kita hanya mengontrol start, pause, dan seek.
+
+        // Sinkronisasi visual midiPlayer dengan audioPlayer
         audioPlayer.addEventListener('play', () => {
             if (midiPlayer) {
-                midiPlayer.start(); // PENTING: Start MIDI playback
+                midiPlayer.paused = false; // PENTING: Mulai playback MIDI (visual)
                 console.log('🎵 Audio play event: MIDI visual starting.');
             }
         });
         audioPlayer.addEventListener('pause', () => {
             if (midiPlayer) {
-                midiPlayer.pause(); // PENTING: Pause MIDI playback
+                midiPlayer.paused = true; // PENTING: Jeda playback MIDI (visual)
                 console.log('⏸️ Audio pause event: MIDI visual paused.');
             }
         });
+        
+        // Perbaikan untuk Seeking:
         audioPlayer.addEventListener('seeking', () => {
-            if (midiPlayer) {
-                midiPlayer.currentTime = audioPlayer.currentTime; // Set currentTime saat seeking
-                midiPlayer.pause(); // Jeda MIDI visual saat seeking
-                console.log('🔄 Audio seeking event: MIDI visual seeking & paused.');
+            if (midiPlayer && audioPlayer.duration) {
+                midiPlayer.paused = true; // Jeda visual saat seeking
+                midiPlayer.currentTime = audioPlayer.currentTime; // Sinkronkan waktu
+                console.log(`🔄 Audio seeking event: MIDI visual seeking to ${audioPlayer.currentTime}.`);
             }
         });
+
         audioPlayer.addEventListener('seeked', () => {
-            if (midiPlayer) {
-                midiPlayer.currentTime = audioPlayer.currentTime; // Set currentTime setelah seeked
+            if (midiPlayer && audioPlayer.duration) {
+                midiPlayer.currentTime = audioPlayer.currentTime; // Sinkronkan waktu
                 if (!audioPlayer.paused) {
-                    midiPlayer.start(); // Lanjutkan jika audioPlayer tidak dijeda
+                    midiPlayer.paused = false; // Lanjutkan jika audioPlayer tidak dijeda
+                    console.log('✅ Audio seeked event: MIDI visual resumed.');
+                } else {
+                    midiPlayer.paused = true; // Jeda jika audioPlayer dijeda
+                    console.log('✅ Audio seeked event: MIDI visual paused after seek.');
                 }
-                console.log('✅ Audio seeked event: MIDI visual resumed.');
             }
         });
+
+        // PENTING: Timeupdate MIDI player - HAPUS INI KARENA MENYEBABKAN ERROR Tone.js
+        /*
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (audioPlayer.paused === false && audioPlayer.duration && midiPlayer) {
+                midiPlayer.currentTime = audioPlayer.currentTime;
+            }
+        });
+        */
     }
 
     // Main Generate Button
@@ -434,8 +450,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (midiPlayer) {
                     midiPlayer.src = fullMidiUrl;
                     midiPlayer.style.opacity = '1'; // Pastikan terlihat
-                    midiPlayer.paused = true; // Awalnya dijeda, akan di-start saat audioPlayer play
-                    midiPlayer.currentTime = 0; // Reset waktu
                 }
                 if (midiVisualizer) {
                     midiVisualizer.src = fullMidiUrl;
@@ -447,7 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     initOrUpdateWavesurfer(); // Inisialisasi/Update Wavesurfer
                     if (wavesurferInstance) {
-                        wavesurferInstance.load(fullAudioUrl); // PENTING: Muat dari URL
+                        wavesurferInstance.load(fullAudioUrl); // PENTING: Muat dari URL untuk Wavesurfer
                     }
                 }, 200);
 
@@ -464,8 +478,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     userMsg = `Tidak bisa connect ke ${BACKEND_API_URL}. Cek: Flask running? Pinggy aktif?`;
                 } else if (error.message.includes('NetworkError')) {
                     userMsg = 'Koneksi gagal. Restart tunnel: ssh -R0:localhost:5000 a.pinggy.io';
-                } else if (error.message.includes('mp3_file_path')) {
-                    userMsg = 'Error backend: Konversi MP3 gagal. Periksa FFmpeg path dan SoundFont di Windows.';
+                } else if (error.message.includes('pop from empty list')) { // Catch specific backend error
+                    userMsg = 'Kesalahan pada logika musik di server. Lirik terlalu pendek atau genre tidak terdeteksi.';
                 }
                 
                 errorMessageSpan.innerHTML = `<strong>${userMsg}</strong>`;
@@ -490,7 +504,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
             audioPlayer?.pause();
-            if (midiPlayer) midiPlayer.pause(); // Langsung panggil pause() di sini
+            if (midiPlayer) { // Cek midiPlayer sebelum memanggil safeMidiControl
+                safeMidiControl('pause'); 
+            }
             wavesurferInstance?.pause();
         }
     });
