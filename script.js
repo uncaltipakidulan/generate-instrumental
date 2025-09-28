@@ -1,4 +1,4 @@
-// script.js - VERSI LENGKAP DAN TERBARU
+// script.js - VERSI LENGKAP & TERAKHIR
 
 document.addEventListener('DOMContentLoaded', () => {
     // === 1. DOM ELEMENTS ===
@@ -7,69 +7,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const tempoSlider = document.getElementById('tempoSlider');
     const tempoValueSpan = document.getElementById('tempoValue');
     const generateBtn = document.getElementById('generateBtn');
-    const audioStartBtn = document.getElementById('audioStartBtn'); // Mobile fix
+    const audioStartBtn = document.getElementById('audioStartBtn');
     
-    // Status / Message elements
+    // Status elements
     const loadingDiv = document.getElementById('loadingDiv');
     const resultDiv = document.getElementById('resultDiv');
     const errorDiv = document.getElementById('errorDiv');
     const errorMessageSpan = document.getElementById('errorMessageSpan');
-
-    // Main output container
     const musicOutputDiv = document.getElementById('musicOutputDiv');
     
-    // Audio (MP3/WAV) related elements
+    // Audio elements
     const audioPlayer = document.getElementById('audioPlayer');
     const downloadLink = document.getElementById('downloadLink');
-    const waveformContainer = document.getElementById('waveform'); // Kontainer utama Wavesurfer
+    const waveformContainer = document.getElementById('waveform');
     
-    // MIDI related elements
-    const midiPlayer = document.getElementById('midiPlayer'); // Elemen <midi-player>
-    const midiVisualizer = document.getElementById('midiVisualizer'); // Elemen <midi-visualizer>
+    // MIDI elements
+    const midiPlayer = document.getElementById('midiPlayer');
+    const midiVisualizer = document.getElementById('midiVisualizer');
     const downloadMidiLink = document.getElementById('downloadMidiLink');
 
     // Backend URL - Auto-detect local vs production (Pinggy)
+    // PENTING: Pastikan URL Pinggy ini sesuai dengan yang Anda dapatkan dari tunnel
     const BACKEND_API_URL = window.location.hostname.includes('github.io') 
-        ? 'https://dindwwctyp.a.pinggy.link'  // Ganti jika URL Pinggy Anda berubah
-        : 'http://localhost:5000';  // Local Flask development
+        ? 'https://dindwwctyp.a.pinggy.link' // GANTI JIKA URL PINGGY ANDA BERUBAH
+        : 'http://localhost:5000';
 
-    let wavesurferInstance = null; // Instans Wavesurfer
-    let audioContextReady = false; // Status AudioContext
+    let wavesurferInstance = null;
+    let audioContextReady = false;
 
     console.log('App starting... Backend URL:', BACKEND_API_URL);
     console.log('MIDI Player element:', midiPlayer);
     console.log('Wavesurfer container:', waveformContainer);
 
     // === 2. HELPER FUNCTIONS ===
-    
-    // Fungsi untuk menginisialisasi atau melanjutkan AudioContext (fix auto-play policy)
+
+    // Initialize AudioContext (fix AudioContext errors)
     const initializeAudioContext = async () => {
-        if (audioContextReady) return true; // Sudah diinisialisasi
+        if (audioContextReady) return true; // Already initialized
 
         try {
-            // Tone.js context (digunakan oleh html-midi-player secara internal)
+            // Tone.js (if available)
             if (typeof Tone !== 'undefined' && Tone.context?.state !== 'running') {
                 await Tone.start();
-                console.log('✅ Tone.js AudioContext started/resumed');
+                console.log('✅ Tone.js AudioContext started');
             }
             
-            // Web Audio API context standar (bisa untuk Wavesurfer WebAudio backend)
+            // HTML5 Audio context
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') {
                 await audioCtx.resume();
                 console.log('✅ Web Audio API resumed');
             }
             
-            // MIDI Player AudioContext (html-midi-player)
-            // Note: html-midi-player secara internal akan resume contextnya
-            // saat interaksi user atau jika Tone.start() sudah dipanggil.
+            // MIDI Player AudioContext (html-midi-player specific)
             if (midiPlayer && midiPlayer.getContext && midiPlayer.getContext()?.state === 'suspended') {
-                 await midiPlayer.getContext().resume();
-                 console.log('✅ MIDI Player AudioContext resumed');
+                await midiPlayer.getContext().resume();
+                console.log('✅ MIDI Player AudioContext resumed');
             }
             
             audioContextReady = true;
-            if (audioStartBtn) audioStartBtn.classList.add('hidden'); // Sembunyikan tombol jika berhasil
+            if (audioStartBtn) audioStartBtn.classList.add('hidden');
             return true;
         } catch (error) {
             console.error('❌ AudioContext init failed:', error);
@@ -81,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Safe MIDI Player Controls (untuk visual piano roll, tanpa suara)
+    // Safe MIDI Player Controls (for visual synchronization only)
     const safeMidiControl = (action) => {
         if (!midiPlayer) {
             console.warn('MIDI Player element not found for action:', action);
@@ -91,32 +88,39 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             switch (action) {
                 case 'play':
-                    // Jangan panggil midiPlayer.start() karena itu memutar suara
-                    // Kita hanya ingin visualnya berjalan, yang sudah dihandle oleh midiPlayer.paused = false
-                    console.log('▶️ MIDI Play (visual only) triggered.');
+                    // Kita hanya ingin visual playback, bukan suara.
+                    // Playback utama ditangani oleh audioPlayer.
+                    // Status midiPlayer.paused akan diset di listener audioPlayer.
+                    console.log('▶️ MIDI Play triggered (visual sync only)');
                     break;
                     
                 case 'pause':
-                    if (midiPlayer.paused === false) { 
-                        midiPlayer.paused = true; // Jeda visual piano roll
+                    if (midiPlayer.paused === false) { // Hanya pause jika sedang bermain
+                        midiPlayer.paused = true;
+                        // Jika kontrol diaktifkan (meskipun kita set controls="false"), 
+                        // coba picu tombol pause internal sebagai fallback
+                        if (midiPlayer.shadowRoot) {
+                            const pauseBtn = midiPlayer.shadowRoot.querySelector('button[title="Pause"], .pause-button');
+                            if (pauseBtn) pauseBtn.click();
+                        }
                     }
-                    console.log('⏸️ MIDI Pause triggered (visual only).');
+                    console.log('⏸️ MIDI Pause triggered (safe mode)');
                     break;
                     
                 case 'stop':
-                    midiPlayer.currentTime = 0; // Reset posisi
-                    midiPlayer.paused = true; // Jeda visual
-                    console.log('⏹️ MIDI Stop triggered.');
+                    midiPlayer.currentTime = 0;
+                    safeMidiControl('pause');
+                    console.log('⏹️ MIDI Stop triggered');
                     break;
                     
                 case 'reset':
                     safeMidiControl('stop');
-                    midiPlayer.src = ''; // Hapus sumber MIDI
-                    midiVisualizer.src = ''; // Hapus sumber visualizer
-                    midiPlayer.removeAttribute('src'); // Hapus atribut src
-                    midiVisualizer.removeAttribute('src'); // Hapus atribut src
-                    midiPlayer.style.opacity = '0.5'; // Visually disable it
-                    console.log('🔄 MIDI Player reset.');
+                    midiPlayer.src = ''; // Hapus src
+                    midiVisualizer.src = ''; // Hapus src
+                    midiPlayer.removeAttribute('src'); // Hapus src attribute
+                    midiVisualizer.removeAttribute('src'); // Hapus src attribute
+                    midiPlayer.style.opacity = '0.5'; // Visually disable
+                    console.log('🔄 MIDI Player reset');
                     break;
             }
         } catch (error) {
@@ -124,30 +128,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Inisialisasi atau memperbarui Wavesurfer
+    // Wavesurfer Init with Minimap & Timeline (using CDN-loaded plugins)
     const initOrUpdateWavesurfer = () => {
-        // Hancurkan instance lama Wavesurfer jika ada
+        // Destroy existing instance BEFORE creating a new one
         if (wavesurferInstance) {
             wavesurferInstance.destroy();
             wavesurferInstance = null;
         }
         
-        // Pastikan kontainer waveform, AudioContext, dan audioPlayer tersedia
         if (!waveformContainer || !audioContextReady || !audioPlayer) {
-            console.warn('Wavesurfer init skipped - container/audio not ready or audioPlayer not found.');
+            console.warn('Wavesurfer skipped - container/audio not ready or audioPlayer not found.');
             return;
         }
 
         try {
             const plugins = [];
-            // Tambahkan plugin Minimap jika tersedia (dari CDN)
+            // Add Minimap plugin if available
             if (typeof WaveSurfer.minimap !== 'undefined') {
                 plugins.push(
                     WaveSurfer.minimap.create({
                         height: 30,
                         waveColor: '#ddd',
                         progressColor: '#999',
-                        container: '#waveform-minimap'
+                        container: '#waveform-minimap' // Pastikan #waveform-minimap ada di HTML
                     })
                 );
                 console.log('✅ Wavesurfer Minimap plugin loaded.');
@@ -155,11 +158,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn('⚠️ Wavesurfer Minimap plugin NOT found (via type check).');
             }
 
-            // Tambahkan plugin Timeline jika tersedia (dari CDN)
+            // Add Timeline plugin if available
             if (typeof WaveSurfer.timeline !== 'undefined') {
                 plugins.push(
                     WaveSurfer.timeline.create({
-                        container: '#waveform-timeline',
+                        container: '#waveform-timeline', // Pastikan #waveform-timeline ada di HTML
                         timeInterval: 0.5,
                         height: 20,
                         primaryFontColor: '#000'
@@ -180,48 +183,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 responsive: true,
                 hideScrollbar: true,
                 interact: true,
-                backend: 'WebAudio', // Lebih baik untuk sinkronisasi
-                media: audioPlayer,  // PENTING: Sambungkan langsung ke elemen HTML audio
+                backend: 'WebAudio',
+                media: audioPlayer, // PENTING: Sambungkan langsung ke elemen HTML audio
                 plugins: plugins
             });
 
-            // Event listeners untuk sinkronisasi playback antara Wavesurfer dan HTML audio element
-            wavesurferInstance.on('play', () => {
-                if (audioPlayer.paused) audioPlayer.play().catch(e => console.warn('Audio play failed:', e));
-                midiPlayer.paused = false; // Pastikan MIDI visual maju
-            });
-            wavesurferInstance.on('pause', () => {
-                if (!audioPlayer.paused) audioPlayer.pause();
-                midiPlayer.paused = true; // Jeda MIDI visual
-            });
-            
-            // Jika audioPlayer yang memicu play/pause/seek
-            audioPlayer.addEventListener('play', () => {
-                if (!wavesurferInstance.isPlaying()) wavesurferInstance.play();
-                midiPlayer.paused = false; // Pastikan MIDI visual maju
-            });
-            audioPlayer.addEventListener('pause', () => {
-                if (wavesurferInstance.isPlaying()) wavesurferInstance.pause();
-                midiPlayer.paused = true; // Jeda MIDI visual
-            });
-            audioPlayer.addEventListener('seeking', () => { // Saat audioPlayer di-seek
+            // Event listeners untuk sync playback
+            // Wavesurfer actions -> HTML Audio
+            wavesurferInstance.on('play', () => audioPlayer.play().catch(e => console.warn('Audio play failed from Wavesurfer:', e)));
+            wavesurferInstance.on('pause', () => audioPlayer.pause());
+            // timeupdate Wavesurfer hanya perlu update tampilan, audioPlayer yang menggerakkan.
+            // Tidak perlu wavesurferInstance.on('timeupdate', ...) yang memanipulasi audioPlayer.currentTime
+            // karena audioPlayer.timeupdate -> wavesurferInstance.seekTo sudah dilakukan.
+
+            // HTML Audio actions -> Wavesurfer
+            audioPlayer.addEventListener('play', () => { if (wavesurferInstance && !wavesurferInstance.isPlaying()) wavesurferInstance.play(); });
+            audioPlayer.addEventListener('pause', () => { if (wavesurferInstance && wavesurferInstance.isPlaying()) wavesurferInstance.pause(); });
+            audioPlayer.addEventListener('seeked', () => {
                 if (audioPlayer.duration && wavesurferInstance) {
                     wavesurferInstance.seekTo(audioPlayer.currentTime / audioPlayer.duration);
                 }
-                if (midiPlayer) {
-                    midiPlayer.currentTime = audioPlayer.currentTime; // Sinkronkan MIDI
-                    midiPlayer.paused = true; // Jeda MIDI visual saat seeking
-                }
             });
-            audioPlayer.addEventListener('seeked', () => { // Setelah audioPlayer selesai di-seek
-                if (audioPlayer.duration && wavesurferInstance) {
+            audioPlayer.addEventListener('timeupdate', () => {
+                if (wavesurferInstance && audioPlayer.duration) {
                     wavesurferInstance.seekTo(audioPlayer.currentTime / audioPlayer.duration);
                 }
-                if (midiPlayer) {
-                    midiPlayer.currentTime = audioPlayer.currentTime; // Sinkronkan MIDI
-                    midiPlayer.paused = audioPlayer.paused; // Lanjutkan play/pause sesuai audioPlayer
-                }
             });
+
 
             // Error handling untuk audio HTML
             audioPlayer.addEventListener('error', (e) => {
@@ -244,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Fungsi untuk menyembunyikan semua pesan status dan output, serta mereset player
+    // Safe Reset Function
     const hideAllOutput = () => {
         console.log('🔄 Resetting all outputs...');
         
@@ -254,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         musicOutputDiv?.classList.add('hidden');
         errorMessageSpan.textContent = '';
 
-        // Reset audio player safely
+        // Reset audio safely
         if (audioPlayer) {
             audioPlayer.pause();
             audioPlayer.currentTime = 0;
@@ -266,8 +254,8 @@ document.addEventListener('DOMContentLoaded', () => {
             downloadLink.removeAttribute('download');
         }
 
-        // Reset MIDI player safely (visual only)
-        safeMidiControl('reset'); 
+        // Reset MIDI safely (using safeMidiControl)
+        safeMidiControl('reset');
         
         if (downloadMidiLink) {
             downloadMidiLink.removeAttribute('href');
@@ -283,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('✅ All outputs reset');
     };
 
-    // Validasi elemen DOM
+    // Validate DOM (existing)
     const validateDOM = () => {
         const required = {
             lyricsInput, genreSelect, tempoSlider, tempoValueSpan, generateBtn,
@@ -301,54 +289,92 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return false;
         }
-        console.log('✅ All DOM elements found.');
+        console.log('✅ All DOM elements found');
         return true;
     };
 
     // === 3. EVENT LISTENERS ===
-    
-    // Listener untuk slider Tempo
+
+    // Tempo slider (existing)
     if (tempoSlider) {
         tempoSlider.addEventListener('input', () => {
             tempoValueSpan.textContent = tempoSlider.value === "0" ? "Auto" : tempoSlider.value;
         });
     }
 
-    // Listener untuk tombol "Mulai Audio" (mobile fix)
+    // Audio start button for mobile (existing)
     if (audioStartBtn) {
         audioStartBtn.addEventListener('click', async () => {
             const success = await initializeAudioContext();
             if (success) {
                 audioStartBtn.classList.add('hidden');
-                // Re-init Wavesurfer setelah AudioContext siap
-                initOrUpdateWavesurfer(); 
+                // Panggil initOrUpdateWavesurfer setelah AudioContext benar-benar siap
+                // dan media sudah di-set di audioPlayer.
+                // initOrUpdateWavesurfer(); // Tidak perlu di sini, dipanggil setelah generate
             }
         });
     }
 
-    // Listener untuk html-midi-player (visual saja)
+    // MIDI Player Event Listeners (for visual only)
     if (midiPlayer) {
-        // Log event penting dari midi-player
-        midiPlayer.addEventListener('loadstart', () => console.log('⏳ MIDI loading started'));
-        midiPlayer.addEventListener('load', () => {
-            midiPlayer.style.opacity = '1'; // Aktifkan secara visual
-            console.log('✅ MIDI loaded and ready for visual playback.');
+        // midiPlayer.addEventListener('loadstart', () => console.log('⏳ MIDI loading started')); // Debug
+        midiPlayer.addEventListener('load', () => { // Gunakan 'load' bukan 'canplay' untuk html-midi-player
+            midiPlayer.style.opacity = '1';
+            console.log('✅ MIDI Player (visual) loaded successfully.');
+            // Setelah dimuat, jika audioPlayer sedang play, sinkronkan
+            if (!audioPlayer.paused) {
+                midiPlayer.paused = false;
+                midiPlayer.currentTime = audioPlayer.currentTime;
+            } else {
+                midiPlayer.paused = true;
+            }
         });
         midiPlayer.addEventListener('error', (e) => {
-            console.error('❌ MIDI load error:', e);
-            errorMessageSpan.textContent = 'Gagal memuat file MIDI. Periksa URL atau format.';
+            console.error('❌ MIDI load error (from html-midi-player):', e);
+            errorMessageSpan.textContent = 'Gagal memuat file MIDI. Periksa URL atau SoundFont.';
             errorDiv.classList.remove('hidden');
         });
-        midiPlayer.addEventListener('end', () => {
-            console.log('🎵 MIDI visual playback ended.');
-            safeMidiControl('stop'); // Reset visual
+        // midiPlayer.addEventListener('end', () => { // Gunakan 'end' bukan 'ended'
+        //     console.log('🎵 MIDI visual playback ended'); // Debug
+        //     // safeMidiControl('stop'); // Tidak perlu, karena kita hanya sync visual
+        // });
+
+        // Sinkronisasi visual midiPlayer dengan audioPlayer
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (audioPlayer.paused === false && audioPlayer.duration && midiPlayer) {
+                midiPlayer.currentTime = audioPlayer.currentTime;
+            }
+        });
+
+        audioPlayer.addEventListener('seeking', () => {
+            if (audioPlayer.duration && midiPlayer) {
+                midiPlayer.currentTime = audioPlayer.currentTime;
+                midiPlayer.paused = true; // Jeda visual midiPlayer saat seeking
+            }
+        });
+
+        audioPlayer.addEventListener('seeked', () => {
+            if (audioPlayer.paused === false && midiPlayer) {
+                midiPlayer.currentTime = audioPlayer.currentTime;
+                midiPlayer.paused = false; // Lanjutkan visual midiPlayer jika audioPlayer tidak dijeda
+            }
+        });
+
+        audioPlayer.addEventListener('play', () => {
+            if (midiPlayer) {
+                midiPlayer.paused = false; // Pastikan visual midiPlayer berjalan
+            }
+        });
+        audioPlayer.addEventListener('pause', () => {
+            if (midiPlayer) {
+                midiPlayer.paused = true; // Pastikan visual midiPlayer berhenti
+            }
         });
     }
 
-    // === 4. Listener Utama untuk Tombol "Generate Instrumental" ===
+    // Main Generate Button
     if (generateBtn && validateDOM()) {
         generateBtn.addEventListener('click', async () => {
-            // Pastikan AudioContext sudah siap sebelum generate
             if (!audioContextReady) {
                 const success = await initializeAudioContext();
                 if (!success) {
@@ -369,14 +395,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            hideAllOutput(); // Sembunyikan semua output lama
-            loadingDiv.classList.remove('hidden'); // Tampilkan loading
-            generateBtn.disabled = true; // Nonaktifkan tombol
+            hideAllOutput();
+            loadingDiv.classList.remove('hidden');
+            generateBtn.disabled = true;
             generateBtn.textContent = 'Membuat...';
             generateBtn.classList.add('opacity-50');
 
             try {
-                console.log('🚀 Starting generation request...');
+                console.log('🚀 Starting generation...');
                 console.log('Payload:', { text: lyrics, genre: selectedGenre, tempo: selectedTempo });
 
                 const response = await fetch(`${BACKEND_API_URL}/generate-instrumental`, {
@@ -394,28 +420,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         const errorData = await response.json();
                         errorMsg = errorData.error || errorMsg;
-                    } catch (e) {
-                        console.error("Failed to parse error JSON:", e);
-                    }
+                    } catch (e) {}
                     throw new Error(errorMsg);
                 }
 
                 const data = await response.json();
-                console.log('✅ Response received from backend:', data);
+                console.log('✅ Response received:', data);
 
-                const audioUrl = data.wav_url || data.mp3_url; // Backend Anda sekarang mengembalikan MP3 sebagai wav_url
+                const audioUrl = data.wav_url || data.mp3_url;
                 const midiUrl = data.midi_url;
 
                 if (!audioUrl || !midiUrl) {
                     throw new Error('File audio/MIDI tidak lengkap dari server.');
                 }
 
-                // Fungsi helper untuk membangun URL lengkap (penting untuk Pinggy/local dev)
-                const getFullUrl = (relativePath) => {
-                    if (relativePath.startsWith('http')) return relativePath; // Sudah absolute
+                // Build full URLs
+                const getFullUrl = (url) => {
+                    if (url.startsWith('http')) return url;
                     const base = BACKEND_API_URL.endsWith('/') ? BACKEND_API_URL.slice(0, -1) : BACKEND_API_URL;
-                    const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
-                    return `${base}${path}`;
+                    // Pastikan path tidak double slash jika url sudah diawali slash
+                    return `${base}${url.startsWith('/') ? url : '/' + url}`;
                 };
 
                 const fullAudioUrl = getFullUrl(audioUrl);
@@ -423,32 +447,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 console.log('🔗 Full URLs - Audio:', fullAudioUrl, 'MIDI:', fullMidiUrl);
 
-                // --- 1. Muat Audio (MP3/WAV) ke elemen HTML audio ---
+                // Load Audio ke HTML <audio> element
                 audioPlayer.src = fullAudioUrl;
-                audioPlayer.load(); // Penting untuk memuat sumber baru
+                audioPlayer.load();
                 downloadLink.href = fullAudioUrl;
                 downloadLink.download = fullAudioUrl.includes('.mp3') ? 'instrumental.mp3' : 'instrumental.wav';
                 
-                // --- 2. Muat MIDI ke html-midi-player (untuk visual saja) ---
-                midiPlayer.src = fullMidiUrl;
-                midiVisualizer.src = fullMidiUrl;
+                // Load MIDI (hanya visual, tanpa suara)
+                if (midiPlayer) {
+                    midiPlayer.src = fullMidiUrl;
+                    // Setelah src di-set, html-midi-player akan memicu event 'load'
+                    // Event listener di atas akan menangani sinkronisasi setelah load.
+                }
+                if (midiVisualizer) { // Visualizer juga harus disetel src-nya
+                    midiVisualizer.src = fullMidiUrl;
+                }
                 downloadMidiLink.href = fullMidiUrl;
                 downloadMidiLink.download = 'instrumental.mid';
-                midiPlayer.style.opacity = '1'; // Pastikan terlihat aktif secara visual
 
-                // --- 3. Inisialisasi/Muat Wavesurfer ---
-                // Delay sedikit untuk stabilitas, memastikan audioPlayer.src sudah diatur
+                // Load Wavesurfer (dengan slight delay untuk stabilitas)
                 setTimeout(() => {
-                    initOrUpdateWavesurfer(); // Pastikan Wavesurfer di-init dengan `media: audioPlayer`
+                    initOrUpdateWavesurfer(); // Inisialisasi/Update Wavesurfer
                     if (wavesurferInstance) {
-                        wavesurferInstance.load(audioPlayer); // PENTING: Muat dari elemen audioPlayer
+                        // PENTING: Wavesurfer.js sebaiknya memuat URL, bukan objek HTMLAudioElement
+                        // Meskipun Anda set media: audioPlayer, load() seringkali bekerja lebih baik dengan URL untuk analisis awal.
+                        wavesurferInstance.load(fullAudioUrl); 
                     }
                 }, 200);
 
-                // Tampilkan seluruh area output musik
+                // Show results
                 musicOutputDiv.classList.remove('hidden');
                 resultDiv.classList.remove('hidden');
-                console.log('🎉 Generation complete! Audio and MIDI loaded.');
+                console.log('🎉 Generation complete!');
 
             } catch (error) {
                 console.error('❌ Generation failed:', error);
@@ -473,39 +503,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // === 5. Initial setup saat DOM selesai dimuat ===
+    // Initial setup
     initializeAudioContext().then(() => {
-        // Init Wavesurfer setelah AudioContext siap
-        initOrUpdateWavesurfer(); 
-        safeMidiControl('reset'); // Pastikan MIDI player dalam kondisi reset visual
+        // Wavesurfer diinisialisasi setelah generate, agar media: audioPlayer siap
+        safeMidiControl('reset');
         console.log('🎵 App ready! AudioContext:', audioContextReady);
     });
 
-    // === 6. Page visibility handler (jeda audio saat tab tidak aktif) ===
+    // Page visibility handler (pause on tab switch)
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
             audioPlayer?.pause();
-            safeMidiControl('pause'); // Jeda visual MIDI
+            safeMidiControl('pause'); // Pause visual MIDI
             wavesurferInstance?.pause();
         }
     });
 
-    // === 7. Global error handler (tangkap error JavaScript yang tidak terduga) ===
+    // Global error handler
     window.addEventListener('error', (e) => {
         console.error('🌐 Global error caught:', e.error?.message || e.message);
-        // Tampilkan pesan error global jika belum ada error spesifik
+        // Only show global error if no specific error is already displayed
         if (errorDiv && errorDiv.classList.contains('hidden')) {
             errorMessageSpan.textContent = `Global Error: ${e.error?.message || e.message}`;
             errorDiv.classList.remove('hidden');
         }
     });
-
-    // Debug: Log MIDI API availability (saat startup)
-    if (midiPlayer) {
-        console.log('MIDI Player API check (on startup):');
-        console.log('- midiPlayer.start method:', !!midiPlayer.start);
-        console.log('- midiPlayer.pause property:', typeof midiPlayer.paused !== 'undefined');
-        console.log('- midiPlayer.stop method:', !!midiPlayer.stop);
-        console.log('- midiPlayer.currentTime property:', typeof midiPlayer.currentTime !== 'undefined');
-    }
 });
