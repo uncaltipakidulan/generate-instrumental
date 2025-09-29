@@ -38,45 +38,50 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Aplikasi dimulai... URL Backend:', BACKEND_API_URL);
 
     // === 2. FUNGSI PEMBANTU ===
-
     // Inisialisasi AudioContext (perbaiki masalah mobile/load pertama)
-    const initializeAudioContext = async () => {
-        if (audioContextReady) return true;
+   const initializeAudioContext = async () => {
+    if (audioContextReady) {
+        console.log('DEBUG: AudioContext sudah siap.');
+        return true;
+    }
 
-        try {
-            // Tunggu gesture pengguna jika diperlukan (misalnya, klik tombol)
-            if (typeof Tone !== 'undefined' && Tone.context?.state !== 'running') {
-                await Tone.start();
-                console.log('✅ AudioContext Tone.js dimulai');
-            }
-            
-            // AudioContext HTML5
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') {
-                // Resume pada gesture pengguna (ditangani di klik tombol)
-                console.log('⏳ AudioContext ditangguhkan - menunggu gesture pengguna');
-                return false; // Belum siap
-            }
-            
-            // MIDI Player (jika tersedia)
-            if (midiPlayer && midiPlayer.getContext && midiPlayer.getContext()?.state === 'suspended') {
-                await midiPlayer.getContext().resume();
-                console.log('✅ AudioContext MIDI Player diresume');
-            }
-            
-            audioContextReady = true;
-            if (audioStartBtn) audioStartBtn.classList.add('hidden');
-            return true;
-        } catch (error) {
-            console.error('❌ Inisialisasi AudioContext gagal:', error);
-            if (audioStartBtn) {
-                audioStartBtn.textContent = 'Kesalahan Audio - Coba Lagi';
-                audioStartBtn.classList.remove('hidden');
-            }
-            return false;
+    try {
+        if (typeof Tone !== 'undefined' && Tone.context?.state !== 'running') {
+            console.log('DEBUG: Mencoba memulai Tone.js AudioContext...');
+            await Tone.start();
+            console.log('DEBUG: ✅ Tone.js AudioContext dimulai');
         }
-    };
-
+        
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') {
+            console.log('DEBUG: ⏳ AudioContext HTML5 ditangguhkan. Mencoba resume...');
+            await audioCtx.resume(); // Coba resume secara eksplisit
+            console.log('DEBUG: ✅ AudioContext HTML5 diresume.');
+        } else {
+            console.log('DEBUG: ✅ AudioContext HTML5 sudah berjalan.');
+        }
+        
+        if (midiPlayer && midiPlayer.getContext && midiPlayer.getContext()?.state === 'suspended') {
+            console.log('DEBUG: ⏳ AudioContext MIDI Player ditangguhkan. Mencoba resume...');
+            await midiPlayer.getContext().resume();
+            console.log('DEBUG: ✅ AudioContext MIDI Player diresume.');
+        } else {
+            console.log('DEBUG: ✅ AudioContext MIDI Player sudah berjalan.');
+        }
+        
+        audioContextReady = true;
+        if (audioStartBtn) audioStartBtn.classList.add('hidden');
+        console.log('DEBUG: initializeAudioContext berhasil. audioContextReady = true.');
+        return true;
+    } catch (error) {
+        console.error('DEBUG: ❌ initializeAudioContext gagal:', error);
+        if (audioStartBtn) {
+            audioStartBtn.textContent = 'Audio Error - Coba Lagi';
+            audioStartBtn.classList.remove('hidden');
+        }
+        return false;
+    }
+};
     // Kontrol MIDI Aman (hindari panggilan method langsung)
     const safeMidiControl = (action) => {
         if (!midiPlayer || !isMidiLoaded) {
