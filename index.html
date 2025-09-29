@@ -37,14 +37,21 @@
     
     <!-- Tambah button untuk manual audio start (fix mobile) -->
     <style>
+        /* Awalnya, sembunyikan tombol di desktop (opsional, tapi lebih baik terlihat) */
+        /* Jika Anda ingin selalu terlihat di desktop, hapus baris display: none; */
+        /* Contoh di bawah membuat tombol SELALU terlihat */
         #audioStartBtn { 
-        @media (max-width: 768px) { 
-            #audioStartBtn { 
-                display: block; 
-                margin: 10px auto; /* Centered margin */
-                width: 80%; /* Make it responsive */
-                max-width: 300px; /* Max width for button */
-            } 
+            display: block; /* Pastikan selalu terlihat */
+            margin: 10px auto; /* Untuk menengahkan */
+            width: 80%; /* Lebar responsif */
+            max-width: 300px; /* Lebar maksimal */
+        } 
+        /* Gaya khusus untuk layar lebih kecil (misalnya, mobile) */
+        @media (min-width: 769px) { /* Ini akan diterapkan di layar desktop/lebar */
+             #audioStartBtn {
+                 width: auto; /* Biarkan lebarnya sesuai konten di desktop */
+                 max-width: 250px; /* Batasi lebar agar tidak terlalu besar */
+             }
         }
     </style>
 </head>
