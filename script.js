@@ -112,31 +112,60 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Inisialisasi Wavesurfer dengan Perbaikan Plugin (gunakan CDN yang benar untuk v7)
+    // Wavesurfer Init with Minimap & Timeline (using CDN-loaded plugins)
     const initOrUpdateWavesurfer = () => {
+        // Destroy existing instance BEFORE creating a new one
         if (wavesurferInstance) {
             wavesurferInstance.destroy();
             wavesurferInstance = null;
+            console.log('DEBUG: Wavesurfer instance lama dihancurkan.');
         }
         
         if (!waveformContainer || !audioContextReady || !audioPlayer) {
-            console.warn('Wavesurfer dilewati - container/audio belum siap.');
+            console.warn('DEBUG: Wavesurfer dilewati - container/audio belum siap atau audioPlayer tidak ditemukan.');
             return;
         }
 
         try {
-            // Muat plugin dari CDN yang benar (WaveSurfer v7)
-            const loadPlugin = async (pluginName) => {
-                if (typeof WaveSurfer[pluginName] !== 'undefined') return WaveSurfer[pluginName].create({ container: `#waveform-${pluginName}` });
-                console.warn(`⚠️ Plugin Wavesurfer ${pluginName} tidak dimuat - periksa CDN/versi.`);
-                return null;
-            };
+            // Perbaikan ini: Inisialisasi plugin secara langsung, lalu masukkan ke array
+            // Wavesurfer v7 API kadang lebih stabil dengan cara ini atau dengan meregistrasi dulu
+            const pluginsToLoad = [];
 
-            const plugins = [];
-            const minimapPlugin = loadPlugin('minimap');
-            const timelinePlugin = loadPlugin('timeline');
-            if (minimapPlugin) plugins.push(minimapPlugin);
-            if (timelinePlugin) plugins.push(timelinePlugin);
+            // Memastikan plugin dimuat sebelum digunakan
+            if (typeof WaveSurfer.Minimap !== 'undefined') { // Perhatikan huruf besar 'M'
+                pluginsToLoad.push(
+                    WaveSurfer.Minimap.create({
+                        container: '#waveform-minimap',
+                        overviewColor: '#ccc', // Ganti sesuai selera
+                        progressColor: '#999',
+                        height: 30,
+                    })
+                );
+                console.log('DEBUG: ✅ Wavesurfer Minimap plugin siap.');
+            } else {
+                console.warn('DEBUG: ⚠️ Wavesurfer Minimap plugin NOT found (via type check).');
+            }
+
+            if (typeof WaveSurfer.Timeline !== 'undefined') { // Perhatikan huruf besar 'T'
+                pluginsToLoad.push(
+                    WaveSurfer.Timeline.create({
+                        container: '#waveform-timeline',
+                        timeInterval: 0.5,
+                        primaryLabelInterval: 10, // Tampilkan label setiap 10 detik
+                        secondaryLabelInterval: 5,
+                        primaryColor: '#666',
+                        secondaryColor: '#aaa',
+                        unlabeledColor: '#eee',
+                        fontFamily: 'Arial',
+                        fontSize: 10,
+                        height: 20,
+                    })
+                );
+                console.log('DEBUG: ✅ Wavesurfer Timeline plugin siap.');
+            } else {
+                console.warn('DEBUG: ⚠️ Wavesurfer Timeline plugin NOT found (via type check).');
+            }
+
 
             wavesurferInstance = WaveSurfer.create({
                 container: waveformContainer,
@@ -148,57 +177,76 @@ document.addEventListener('DOMContentLoaded', () => {
                 responsive: true,
                 hideScrollbar: true,
                 interact: true,
-                backend: 'WebAudio',
-                media: audioPlayer, // Hubungkan ke elemen audio HTML
-                plugins: plugins
+                backend: 'WebAudio', // Ini sudah deprecated di v7, tapi masih bisa jalan.
+                media: audioPlayer, // PENTING: Sambungkan langsung ke elemen HTML audio
+                plugins: pluginsToLoad // Gunakan array pluginsToLoad
             });
 
-            // Event sinkronisasi (audio → wavesurfer)
-            wavesurferInstance.on('play', () => audioPlayer.play().catch(e => console.warn('Pemutaran audio gagal:', e)));
-            wavesurferInstance.on('pause', () => audioPlayer.pause());
-            wavesurferInstance.on('seek', (progress) => {
-                audioPlayer.currentTime = progress * audioPlayer.duration;
+            // Event listeners untuk sync playback
+            // Wavesurfer actions -> HTML Audio
+            wavesurferInstance.on('play', () => {
+                audioPlayer.play().catch(e => console.warn('DEBUG: Audio play failed from Wavesurfer:', e));
+                console.log('DEBUG: Wavesurfer play event, memicu audioPlayer.play()');
+            });
+            wavesurferInstance.on('pause', () => {
+                audioPlayer.pause();
+                console.log('DEBUG: Wavesurfer pause event, memicu audioPlayer.pause()');
+            });
+            wavesurferInstance.on('decode', () => { // Event saat audio selesai di-decode
+                console.log('DEBUG: Wavesurfer audio decoded. Ready for playback.');
+            });
+            wavesurferInstance.on('ready', () => { // Event saat Wavesurfer siap
+                console.log('DEBUG: Wavesurfer ready.');
             });
 
-            // Sinkronisasi audio → wavesurfer
-            audioPlayer.addEventListener('play', () => {
-                if (!wavesurferInstance.isPlaying()) wavesurferInstance.play();
+            // HTML Audio actions -> Wavesurfer
+            audioPlayer.addEventListener('play', () => { 
+                if (wavesurferInstance && !wavesurferInstance.isPlaying()) {
+                    wavesurferInstance.play(); 
+                    console.log('DEBUG: audioPlayer play event, memicu wavesurfer.play()');
+                }
             });
-            audioPlayer.addEventListener('pause', () => {
-                if (wavesurferInstance.isPlaying()) wavesurferInstance.pause();
-            });
-            audioPlayer.addEventListener('timeupdate', () => {
-                if (audioPlayer.duration && wavesurferInstance) {
-                    const progress = audioPlayer.currentTime / audioPlayer.duration;
-                    wavesurferInstance.seekTo(progress);
+            audioPlayer.addEventListener('pause', () => { 
+                if (wavesurferInstance && wavesurferInstance.isPlaying()) {
+                    wavesurferInstance.pause(); 
+                    console.log('DEBUG: audioPlayer pause event, memicu wavesurfer.pause()');
                 }
             });
             audioPlayer.addEventListener('seeked', () => {
                 if (audioPlayer.duration && wavesurferInstance) {
                     wavesurferInstance.seekTo(audioPlayer.currentTime / audioPlayer.duration);
+                    console.log('DEBUG: audioPlayer seeked event, memicu wavesurfer.seekTo()');
+                }
+            });
+            audioPlayer.addEventListener('timeupdate', () => {
+                if (wavesurferInstance && audioPlayer.duration) {
+                    // Wavesurfer akan otomatis mengupdate kursornya jika media terhubung.
+                    // Tidak perlu memanggil wavesurferInstance.seekTo() di timeupdate jika `media` sudah diset
                 }
             });
 
-            // Penanganan error audio
+
+            // Error handling untuk audio HTML
             audioPlayer.addEventListener('error', (e) => {
-                console.error('Kesalahan load audio:', e);
-                errorMessageSpan.textContent = 'Gagal memuat file audio. Periksa URL atau format.';
+                console.error('DEBUG: Audio load error (from HTML Audio element):', e);
+                errorMessageSpan.textContent = 'Gagal memuat file audio. Periksa URL atau format file.';
                 errorDiv.classList.remove('hidden');
             });
-
-            console.log('✅ Wavesurfer diinisialisasi dengan plugin');
+            
+            console.log('DEBUG: ✅ Wavesurfer core initialized successfully');
         } catch (error) {
-            console.error('❌ Inisialisasi Wavesurfer gagal:', error);
+            console.error('DEBUG: ❌ Wavesurfer init failed:', error);
+            // Fallback UI
             waveformContainer.innerHTML = `
                 <div class="p-4 text-center text-red-500 bg-red-50 rounded">
                     <p>Waveform gagal dimuat 😞</p>
-                    <p class="text-sm mt-1">Kesalahan: ${error.message}. Coba refresh atau perbarui CDN.</p>
-                    <button onclick="location.reload()" class="mt-2 px-4 py-1 bg-blue-500 text-white rounded">Refresh</button>
+                    <p class="text-sm mt-1">Error: ${error.message}. Mungkin masalah CDN atau versi plugin.</p>
+                    <button onclick="location.reload()" class="mt-2 px-4 py-1 bg-blue-500 text-white rounded">Refresh Halaman</button>
                 </div>
             `;
         }
     };
-
+    
     // Fungsi Reset (diperbarui untuk MIDI)
     const hideAllOutput = () => {
         loadingDiv?.classList.add('hidden');
