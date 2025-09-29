@@ -34,25 +34,14 @@
         worker-src 'self' blob:;
         object-src 'none';
     ">
-    
-    <!-- Tambah button untuk manual audio start (fix mobile) -->
+
     <style>
-        /* Awalnya, sembunyikan tombol di desktop (opsional, tapi lebih baik terlihat) */
-        /* Jika Anda ingin selalu terlihat di desktop, hapus baris display: none; */
-        /* Contoh di bawah membuat tombol SELALU terlihat */
         #audioStartBtn { 
-            display: block; /* Pastikan selalu terlihat */
-            margin: 10px auto; /* Untuk menengahkan */
-            width: 80%; /* Lebar responsif */
+            display: block !important; /* Pastikan selalu terlihat, bahkan jika ada aturan lain */
+            margin: 10px auto; /* Agar di tengah */
+            width: 80%; /* Responsif */
             max-width: 300px; /* Lebar maksimal */
         } 
-        /* Gaya khusus untuk layar lebih kecil (misalnya, mobile) */
-        @media (min-width: 769px) { /* Ini akan diterapkan di layar desktop/lebar */
-             #audioStartBtn {
-                 width: auto; /* Biarkan lebarnya sesuai konten di desktop */
-                 max-width: 250px; /* Batasi lebar agar tidak terlalu besar */
-             }
-        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
