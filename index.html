@@ -12,14 +12,17 @@
     <!-- Dependencies untuk html-midi-player: Tone.js dan Magenta.js -->
     <!-- Menggunakan versi combine untuk efisiensi -->
     <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.6.0/dist/midi-player.min.js"></script>
+
+    <!-- Wavesurfer.js CORE -->
+    <!-- Ubah agar dimuat secara ASYNC -->
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js" async></script>
     
     <!-- Wavesurfer.js PLUGINS -->
-    <!-- Memuat setelah Wavesurfer.js core -->
-    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/minimap.min.js"></script>
-    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.min.js"></script>
+    <!-- Muat plugin secara ASYNC juga, setelah CORE -->
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/minimap.min.js" async></script>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.min.js" async></script>
     
     <!-- Penting: meta tag CSP harus di awal head, setelah meta charset -->
-    <!-- Perbarui CSP untuk menyertakan semua domain CDN yang digunakan (unpkg.com, cdn.jsdelivr.net) -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link https://uncaltipakidulan.github.io https://unpkg.com https://cdn.jsdelivr.net;
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com blob:;
@@ -31,24 +34,38 @@
         worker-src 'self' blob:;
         object-src 'none';
     ">
-
-        <style>
-            audioStartBtn { 
-            display: block !important; /* Sangat penting: paksa terlihat */
-            margin: 10px auto; 
-            width: 80%;
-            max-width: 300px;
-            background-color: #4CAF50; /* Tambahkan warna latar belakang yang mencolok */
-            color: white; /* Warna teks */
-            padding: 10px 20px; /* Padding */
-            border: none; /* Hilangkan border */
-            border-radius: 5px; /* Sudut membulat */
-            cursor: pointer; /* Tunjukkan bahwa ini bisa diklik */
-            font-size: 1.2em; /* Perbesar ukuran font */
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Tambahkan shadow agar lebih menonjol */
-        } 
+    
+    <style>
+        #audioStartBtn { 
+            display: block !important; 
+            margin: 20px auto; 
+            width: 80%; 
+            max-width: 300px; 
+            background-color: #4CAF50 !important; 
+            color: white !important; 
+            padding: 15px 20px !important; 
+            border: none !important; 
+            border-radius: 8px !important; 
+            cursor: pointer !important; 
+            font-size: 1.3em !important; 
+            font-weight: bold !important; 
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3) !important; 
+            text-align: center !important; 
+            transition: all 0.3s ease !important; 
+        }
+        #audioStartBtn:hover {
+            background-color: #45a049 !important; 
+            transform: scale(1.05) !important; 
+        }
+        #audioStartBtn:active {
+            transform: scale(0.98) !important; 
+        }
+        #audioStartBtn.hidden {
+            display: none !important; 
+        }
     </style>
 </head>
+<body>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
     <button id="audioStartBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4">
     Mulai Audio (Tap untuk mobile)
