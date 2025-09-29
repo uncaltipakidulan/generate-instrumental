@@ -37,12 +37,20 @@
 
         <style>
         #audioStartBtn { 
-            display: block !important; /* Pastikan selalu terlihat */
+            display: block !important; /* Sangat penting: paksa terlihat */
             margin: 10px auto; 
             width: 80%;
             max-width: 300px;
+            background-color: #4CAF50; /* Tambahkan warna latar belakang yang mencolok */
+            color: white; /* Warna teks */
+            padding: 10px 20px; /* Padding */
+            border: none; /* Hilangkan border */
+            border-radius: 5px; /* Sudut membulat */
+            cursor: pointer; /* Tunjukkan bahwa ini bisa diklik */
+            font-size: 1.2em; /* Perbesar ukuran font */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Tambahkan shadow agar lebih menonjol */
         } 
-       </style>
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
     <button id="audioStartBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4">
