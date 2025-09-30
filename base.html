@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Generate Instrumental</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-blue-500 p-4 text-white">
+        <a href="/" class="mr-4">Home</a>
+        <a href="/generate" class="mr-4">Generate MIDI</a>
+        <a href="/upload" class="mr-4">Upload Audio</a>
+    </nav>
+    <div class="container mx-auto p-4">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class="bg-yellow-100 border p-2 mb-4">
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</body>
+</html>
+
