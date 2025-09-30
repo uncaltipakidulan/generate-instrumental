@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl mb-4">Generate MIDI</h1>
+<form id="generateForm">
+    <label>Genre:</label>
+    <select name="genre" class="border p-2 mb-2">
+        <option value="pop">Pop</option>
+        <option value="jazz">Jazz</option>
+        <option value="rock">Rock</option>
+    </select>
+    <br>
+    <label>Instrument (MIDI #):</label>
+    <input type="number" name="instrument" value="0" min="0" max="127" class="border p-2 mb-2">
+    <br>
+    <label>Tempo (BPM):</label>
+    <input type="number" name="tempo" value="120" min="60" max="200" class="border p-2 mb-2">
+    <br>
+    <button type="submit" class="bg-blue-500 text-white p-2">Generate</button>
+</form>
+<div id="progress" class="hidden mt-4">Generating...</div>
+<div id="result" class="mt-4"></div>
+
+<script>
+$('#generateForm').submit(function(e) {
+    e.preventDefault();
+    $('#progress').removeClass('hidden');
+    $.post('/generate_midi', $(this).serialize(), function(data) {
+        $('#progress').addClass('hidden');
+        if (data.success) {
+            $('#result').html(`
+                <p>${data.message}</p>
+                <a href="${data.midi_url}" download>MIDI Download</a> |
+                <a href="${data.audio_url}" download>Audio Download</a>
+            `);
+        } else {
+            $('#result').html(`<p class="text-red-500">Error: ${data.error}</p>`);
+        }
+    });
+});
+</script>
+{% endblock %}
+
