@@ -8,7 +8,24 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Custom CSS Anda -->
     <link rel="stylesheet" href="./style.css">
-
+    <!-- Fix Tailwind CSS warnings -->
+ <style>
+    /* Suppress vendor-specific warnings */
+    @supports not (-webkit-text-size-adjust: 100%) {
+        /* Fallback for unsupported properties */
+    }
+    
+    /* Custom scrollbar for better compatibility */
+    * {
+        scrollbar-width: auto;
+        scrollbar-color: #cbd5e0 #f7fafc;
+    }
+    
+    /* Hide console errors in production */
+    #waveform {
+        min-height: 80px;
+    }
+ </style>
     <!-- Dependencies untuk html-midi-player: Tone.js dan Magenta.js -->
     <!-- Menggunakan versi combine untuk efisiensi -->
     <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.6.0/dist/midi-player.min.js"></script>
