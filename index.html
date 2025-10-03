@@ -1,199 +1,87 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text to Instrumental Generator</title>
-    <!-- Tailwind CSS (untuk styling cepat) -->
+    <title>Generate Instrumental</title>
+    <!-- Pastikan Anda memiliki Tailwind CSS yang terhubung dengan benar -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Custom CSS Anda -->
-    <link rel="stylesheet" href="./style.css">
-    <!-- Fix Tailwind CSS warnings -->
- <style>
-    /* Suppress vendor-specific warnings */
-    @supports not (-webkit-text-size-adjust: 100%) {
-        /* Fallback for unsupported properties */
-    }
-    
-    /* Custom scrollbar for better compatibility */
-    * {
-        scrollbar-width: auto;
-        scrollbar-color: #cbd5e0 #f7fafc;
-    }
-    
-    /* Hide console errors in production */
-    #waveform {
-        min-height: 80px;
-    }
- </style>
-    <!-- Dependencies untuk html-midi-player: Tone.js dan Magenta.js -->
-    <!-- Menggunakan versi combine untuk efisiensi -->
-    <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.6.0/dist/midi-player.min.js"></script>
-
-    <!-- Wavesurfer.js CORE -->
-    <!-- Ubah agar dimuat secara ASYNC -->
-    <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js" async></script>
-    
-    <!-- Wavesurfer.js PLUGINS -->
-    <!-- Muat plugin secara ASYNC juga, setelah CORE -->
-    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/minimap.min.js" async></script>
-    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.min.js" async></script>
-    
-    <!-- Penting: meta tag CSP harus di awal head, setelah meta charset -->
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link https://uncaltipakidulan.github.io https://unpkg.com https://cdn.jsdelivr.net;
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com blob:;
-        connect-src 'self' https://dindwwctyp.a.pinggy.link https://uncaltipakidulan.github.io data: https://storage.googleapis.com https://unpkg.com https://cdn.jsdelivr.net;
-        img-src 'self' data: blob: https://unpkg.com https://cdn.jsdelivr.net;
-        style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com;
-        font-src 'self' data: https://storage.googleapis.com https://unpkg.com https://cdn.jsdelivr.net;
-        media-src 'self' data: blob: https://storage.googleapis.com https://dindwwctyp.a.pinggy.link https://uncaltipakidulan.github.io;
-        worker-src 'self' blob:;
-        object-src 'none';
-    ">
-    
+    <!-- Tambahkan CSS fix yang saya berikan sebelumnya di sini -->
     <style>
-        #audioStartBtn { 
-            display: block !important; 
-            margin: 20px auto; 
-            width: 80%; 
-            max-width: 300px; 
-            background-color: #4CAF50 !important; 
-            color: white !important; 
-            padding: 15px 20px !important; 
-            border: none !important; 
-            border-radius: 8px !important; 
-            cursor: pointer !important; 
-            font-size: 1.3em !important; 
-            font-weight: bold !important; 
-            box-shadow: 0 6px 12px rgba(0,0,0,0.3) !important; 
-            text-align: center !important; 
-            transition: all 0.3s ease !important; 
+        /* Fix Tailwind CSS warnings */
+        @supports not (-webkit-text-size-adjust: 100%) {
+            /* Fallback for unsupported properties */
         }
-        #audioStartBtn:hover {
-            background-color: #45a049 !important; 
-            transform: scale(1.05) !important; 
+        
+        /* Custom scrollbar for better compatibility */
+        * {
+            scrollbar-width: auto;
+            scrollbar-color: #cbd5e0 #f7fafc;
         }
-        #audioStartBtn:active {
-            transform: scale(0.98) !important; 
-        }
-        #audioStartBtn.hidden {
-            display: none !important; 
+        
+        /* Hide console errors in production */
+        #waveform {
+            min-height: 80px;
         }
     </style>
 </head>
-<body>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
-    <button id="audioStartBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4">
-    Mulai Audio (Tap untuk mobile)
-</button>
-
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Text to Instrumental Generator</h1>
-        <p class="text-gray-600 text-center mb-4"></p>
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
+        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Generate Instrumental dari Lirik</h1>
 
         <div class="mb-4">
-            <label for="lyricsInput" class="block text-gray-700 text-sm font-bold mb-2">
-                Masukkan Lirik/Teks Anda:
-            </label>
-            <textarea id="lyricsInput" 
-                      class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline resize-y min-h-[100px]" 
-                      placeholder="Teks atau lirik lagu yang akan diubah menjadi instrumental.&#10;Contoh:&#10;[intro]&#10;Ini adalah intro&#10;[verse 1]&#10;Ini adalah verse pertama&#10;[chorus]&#10;Ini adalah chorus"></textarea>
+            <label for="textInput" class="block text-gray-700 text-sm font-bold mb-2">Lirik/Deskripsi Musik:</label>
+            <textarea id="textInput" rows="6" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Masukkan lirik atau deskripsi musik..."></textarea>
+            <p id="charCountDisplay" class="text-xs text-gray-500 text-right mt-1">0 karakter</p>
         </div>
 
-        <!-- Input untuk Pemilihan Genre -->
         <div class="mb-4">
-            <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">
-                Pilih Genre:
-            </label>
-            <select id="genreSelect"
-                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="auto">Otomatis</option>
+            <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">Pilih Genre:</label>
+            <select id="genreSelect" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <option value="auto">Auto-Detect</option>
                 <option value="pop">Pop</option>
                 <option value="rock">Rock</option>
                 <option value="metal">Metal</option>
                 <option value="ballad">Ballad</option>
                 <option value="blues">Blues</option>
+                <option value="jazz">Jazz</option>
+                <option value="hiphop">Hiphop</option>
             </select>
         </div>
 
-        <!-- Input untuk Pemilihan Tempo -->
         <div class="mb-6">
-            <label for="tempoSlider" class="block text-gray-700 text-sm font-bold mb-2">
-                Tempo (BPM): <span id="tempoValue">Auto</span>
-            </label>
-            <input type="range" id="tempoSlider" min="49" max="200" value="0" step="1"
-                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+            <label for="tempoInput" class="block text-gray-700 text-sm font-bold mb-2">Tempo (BPM, kosongkan untuk auto):</label>
+            <input type="number" id="tempoInput" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g., 120">
         </div>
 
-        <button id="generateBtn" 
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
-            Buat Instrumental
-        </button>
-
-        <!-- Area Pesan Loading -->
-        <div id="loadingDiv" class="hidden mt-4 p-3 bg-blue-100 text-blue-800 rounded text-center flex items-center justify-center">
-            <svg class="animate-spin h-5 w-5 mr-3 inline-block" viewBox="0 0 24 24" fill="currentColor">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Processing...
+        <div class="flex items-center justify-center mb-6">
+            <button id="generateBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline flex items-center justify-center">
+                <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generate Instrumental 🎵
+            </button>
         </div>
 
-        <!-- Area Pesan Sukses/Hasil -->
-        <div id="resultDiv" class="hidden mt-4 p-3 bg-green-100 text-green-800 rounded text-center">
-            Instrumental berhasil dibuat!
-        </div>
+        <p id="statusMsg" class="text-center text-gray-500 mb-4"></p>
 
-        <!-- Wadah Output Musik Utama -->
-        <div id="musicOutputDiv" class="hidden mt-4">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Output Instrumental:</h2>
+        <div id="audioSection" class="border-t pt-6 mt-6 hidden"> <!-- Sembunyikan awalnya -->
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Hasil Audio</h2>
             
-            <!-- ====== BAGIAN AUDIO (MP3) ====== -->
-            <div id="audioPlayerContainer" class="mb-4">
-                <h3 class="text-lg font-semibold text-gray-700 mb-2">MP3 Playback:</h3>
-                <audio id="audioPlayer" controls class="w-full mb-2"></audio>
-                <a id="downloadLink" href="#" download="generated_instrumental.mp3" class="block text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+            <div id="waveform" class="bg-gray-200 rounded-lg mb-4"></div>
+            
+            <audio id="audioPlayer" controls class="w-full mb-2"></audio>
+            
+            <div class="flex justify-between items-center">
+                <button id="downloadBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" disabled>
                     Download MP3
-                </a>
+                </button>
             </div>
-            
-            <!-- ====== VISUALISASI WAVEFORM ====== -->
-            <!-- Tambahkan div untuk timeline dan minimap agar plugin memiliki container terpisah -->
-            <div id="waveformContainer" class="mb-4">
-                <h3 class="text-lg font-semibold text-gray-700 mb-2">Visualisasi Waveform:</h3>
-                <div id="waveform" style="width: 100%; height: 120px; border: 1px solid #d1d5db; border-radius: 5px;"></div>
-                <div id="waveform-timeline" style="width: 100%; height: 20px; margin-top: 5px;"></div>
-                <div id="waveform-minimap" style="width: 100%; height: 40px; margin-top: 5px;"></div>
-            </div>
-
-            <!-- ====== BAGIAN MIDI PLAYER & VISUALIZER ====== -->
-            <div id="midiPlayerContainer" class="mb-4">
-                <h3 class="text-lg font-semibold text-gray-700 mb-2">MIDI Player:</h3>
-                <midi-player id="midiPlayer"
-                             src=""
-                             visualizer="#midiVisualizer"
-                             class="w-full mb-2"
-                             controls="false" <!-- PENTING: nonaktifkan kontrol bawaan -->
-                             style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 5px;">
-                </midi-player>
-                
-                <midi-visualizer type="piano-roll" id="midiVisualizer" 
-                                 style="width: 100%; height: 150px; background-color: #f0f0f0; border-radius: 5px;"></midi-visualizer>
-
-                <a id="downloadMidiLink" href="#" download="generated_instrumental.mid" class="block text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded mt-2">
-                    Download MIDI
-                </a>
-            </div>
-        </div>
-
-        <!-- Area Pesan Error -->
-        <div id="errorDiv" class="hidden mt-4 p-3 bg-red-100 text-red-800 rounded text-center">
-            <strong>Error:</strong> <span id="errorMessageSpan"></span>
         </div>
     </div>
 
-    <!-- Script aplikasi Anda -->
-    <script src="./script.js" defer></script>
+    <!-- Pastikan script.js dimuat di akhir body -->
+    <script src="script.js"></script>
 </body>
 </html>
