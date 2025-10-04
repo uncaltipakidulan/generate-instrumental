@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generate Instrumental</title>
+    <title>Generate Instrumental 🎵</title>
     <!-- Tailwind CSS (pastikan ini ada dan berfungsi) -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Custom CSS untuk mengatasi warnings browser dan sedikit styling -->
@@ -42,11 +42,11 @@
             display: none;
         }
     </style>
-       <!-- !!! PENTING: MUAT WAVESURFER.JS SECARA TRADISIONAL DI SINI !!! -->
+
+    <!-- Wavesurfer.js CORE -->
+    <!-- PENTING: Load Wavesurfer.js di sini secara langsung -->
     <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
-    <!-- Hapus baris plugin Wavesurfer yang terpisah jika Anda tidak menggunakannya -->
-    <!-- <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/minimap.min.js"></script> -->
-    <!-- <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.min.js"></script> -->
+    <!-- Tidak perlu memuat plugins secara terpisah di HTML, akan diinisialisasi via JS jika diperlukan -->
 
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4 font-sans antialiased">
