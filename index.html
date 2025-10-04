@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generate Instrumental</title>
-    <!-- Pastikan Anda memiliki Tailwind CSS yang terhubung dengan benar -->
+    <!-- Tailwind CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Tambahkan CSS fix yang saya berikan sebelumnya di sini -->
+    
+    <!-- Custom Styles for Scrollbar and Wavesurfer (untuk mengatasi warnings CSS) -->
     <style>
-        /* Fix Tailwind CSS warnings */
+        /* Suppress vendor-specific warnings */
         @supports not (-webkit-text-size-adjust: 100%) {
             /* Fallback for unsupported properties */
         }
@@ -19,22 +20,27 @@
             scrollbar-color: #cbd5e0 #f7fafc;
         }
         
-        /* Hide console errors in production */
+        /* Ensure Wavesurfer container has a minimum height */
         #waveform {
-            min-height: 80px;
+            min-height: 80px; /* Make sure it's visible even if no audio is loaded */
+            background-color: #f3f4f6; /* Light gray background */
+            border-radius: 0.5rem;
+            padding: 0.5rem;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4 font-sans antialiased">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
         <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Generate Instrumental dari Lirik</h1>
 
+        <!-- Input Section -->
         <div class="mb-4">
             <label for="textInput" class="block text-gray-700 text-sm font-bold mb-2">Lirik/Deskripsi Musik:</label>
-            <textarea id="textInput" rows="6" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Masukkan lirik atau deskripsi musik..."></textarea>
+            <textarea id="textInput" rows="6" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline resize-y" placeholder="Masukkan lirik atau deskripsi musik..."></textarea>
             <p id="charCountDisplay" class="text-xs text-gray-500 text-right mt-1">0 karakter</p>
         </div>
 
+        <!-- Genre Selection -->
         <div class="mb-4">
             <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">Pilih Genre:</label>
             <select id="genreSelect" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
@@ -49,13 +55,15 @@
             </select>
         </div>
 
+        <!-- Tempo Input -->
         <div class="mb-6">
             <label for="tempoInput" class="block text-gray-700 text-sm font-bold mb-2">Tempo (BPM, kosongkan untuk auto):</label>
             <input type="number" id="tempoInput" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g., 120">
         </div>
 
+        <!-- Generate Button -->
         <div class="flex items-center justify-center mb-6">
-            <button id="generateBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline flex items-center justify-center">
+            <button id="generateBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline flex items-center justify-center min-w-[200px]">
                 <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -64,16 +72,25 @@
             </button>
         </div>
 
-        <p id="statusMsg" class="text-center text-gray-500 mb-4"></p>
+        <!-- Status Message -->
+        <p id="statusMsg" class="text-center text-gray-500 mb-4 h-6 flex items-center justify-center"></p>
 
-        <div id="audioSection" class="border-t pt-6 mt-6 hidden"> <!-- Sembunyikan awalnya -->
+        <!-- Audio Output Section (Initially Hidden) -->
+        <div id="audioSection" class="border-t pt-6 mt-6 hidden">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Hasil Audio</h2>
             
-            <div id="waveform" class="bg-gray-200 rounded-lg mb-4"></div>
+            <!-- Wavesurfer Waveform Container -->
+            <div id="waveform" class="mb-4"></div>
             
-            <audio id="audioPlayer" controls class="w-full mb-2"></audio>
+            <!-- HTML5 Audio Player -->
+            <audio id="audioPlayer" controls class="w-full mb-4"></audio>
             
             <div class="flex justify-between items-center">
+                <!-- Play/Pause Button (Controlled by Wavesurfer/HTML5 Audio) -->
+                <button id="playPauseBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Play / Pause
+                </button>
+                <!-- Download Button -->
                 <button id="downloadBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" disabled>
                     Download MP3
                 </button>
@@ -81,7 +98,7 @@
         </div>
     </div>
 
-    <!-- Pastikan script.js dimuat di akhir body -->
+    <!-- PENTING: Script.js harus dimuat di akhir body untuk memastikan semua elemen DOM sudah ada -->
     <script src="script.js"></script>
 </body>
 </html>
