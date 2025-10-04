@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- KONFIGURASI PENTING ---
     // GANTI INI DENGAN URL BACKEND FLASK ANDA JIKA BERBEDA DARI LOKAL!
     // Contoh jika backend di localhost:5000:
-    const API_BASE_URL = 'http://localhost:5000';
+    const API_BASE_URL = 'https://dindwwctyp.a.pinggy.link';
     // Contoh jika backend di deploy ke server:
     // const API_BASE_URL = 'https://api.yourdomain.com'; 
     // Atau jika frontend dan backend di server yang sama dan Anda ingin menggunakan path relatif:
