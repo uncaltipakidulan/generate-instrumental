@@ -1,50 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generate Instrumental</title>
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS (pastikan ini ada dan berfungsi) -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    
-    <!-- Custom Styles for Scrollbar and Wavesurfer (untuk mengatasi warnings CSS) -->
+    <!-- Custom CSS untuk mengatasi warnings browser dan sedikit styling -->
     <style>
-        /* Suppress vendor-specific warnings */
-        @supports not (-webkit-text-size-adjust: 100%) {
-            /* Fallback for unsupported properties */
-        }
-        
-        /* Custom scrollbar for better compatibility */
+        /* Untuk mengatasi beberapa warning CSS vendor-specific */
+        @supports not (-webkit-text-size-adjust: 100%) {}
+        @supports not (-moz-osx-font-smoothing: grayscale) {}
+
+        /* Custom scrollbar untuk cross-browser compatibility */
         * {
             scrollbar-width: auto;
-            scrollbar-color: #cbd5e0 #f7fafc;
+            scrollbar-color: #a0aec0 #edf2f7; /* gray-400 dan gray-100 */
         }
-        
-        /* Ensure Wavesurfer container has a minimum height */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #edf2f7; /* gray-100 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #a0aec0; /* gray-400 */
+            border-radius: 6px;
+            border: 3px solid #edf2f7; /* gray-100 */
+        }
+
+        /* Minimum height untuk waveform container */
         #waveform {
-            min-height: 80px; /* Make sure it's visible even if no audio is loaded */
-            background-color: #f3f4f6; /* Light gray background */
+            min-height: 80px;
+            background-color: #f7fafc; /* gray-50 */
             border-radius: 0.5rem;
-            padding: 0.5rem;
+        }
+
+        /* Sembunyikan elemen secara default, akan ditampilkan oleh JS */
+        #audioSection {
+            display: none;
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4 font-sans antialiased">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
-        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Generate Instrumental dari Lirik</h1>
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl border border-gray-200">
+        <h1 class="text-3xl font-extrabold text-center mb-6 text-gray-800">Generate Instrumental 🎵</h1>
 
-        <!-- Input Section -->
         <div class="mb-4">
-            <label for="textInput" class="block text-gray-700 text-sm font-bold mb-2">Lirik/Deskripsi Musik:</label>
-            <textarea id="textInput" rows="6" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline resize-y" placeholder="Masukkan lirik atau deskripsi musik..."></textarea>
+            <label for="textInput" class="block text-gray-700 text-sm font-bold mb-2">Lirik atau Deskripsi Musik:</label>
+            <textarea id="textInput" rows="6" class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out" placeholder="Masukkan lirik atau deskripsi suasana musik yang Anda inginkan..."></textarea>
             <p id="charCountDisplay" class="text-xs text-gray-500 text-right mt-1">0 karakter</p>
         </div>
 
-        <!-- Genre Selection -->
         <div class="mb-4">
-            <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">Pilih Genre:</label>
-            <select id="genreSelect" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="auto">Auto-Detect</option>
+            <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">Pilih Genre Musik:</label>
+            <select id="genreSelect" class="shadow-sm border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out">
+                <option value="auto">Auto-Detect (Rekomendasi)</option>
                 <option value="pop">Pop</option>
                 <option value="rock">Rock</option>
                 <option value="metal">Metal</option>
@@ -55,50 +67,39 @@
             </select>
         </div>
 
-        <!-- Tempo Input -->
         <div class="mb-6">
             <label for="tempoInput" class="block text-gray-700 text-sm font-bold mb-2">Tempo (BPM, kosongkan untuk auto):</label>
-            <input type="number" id="tempoInput" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g., 120">
+            <input type="number" id="tempoInput" class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out" placeholder="misalnya: 120">
         </div>
 
-        <!-- Generate Button -->
         <div class="flex items-center justify-center mb-6">
-            <button id="generateBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline flex items-center justify-center min-w-[200px]">
+            <button id="generateBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out flex items-center justify-center">
                 <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Generate Instrumental 🎵
+                Generate Instrumental
             </button>
         </div>
 
-        <!-- Status Message -->
-        <p id="statusMsg" class="text-center text-gray-500 mb-4 h-6 flex items-center justify-center"></p>
+        <p id="statusMsg" class="text-center text-gray-600 text-sm mb-4 min-h-[1.5em]"></p>
 
-        <!-- Audio Output Section (Initially Hidden) -->
-        <div id="audioSection" class="border-t pt-6 mt-6 hidden">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Hasil Audio</h2>
+        <div id="audioSection" class="border-t border-gray-200 pt-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Hasil Audio Anda</h2>
             
-            <!-- Wavesurfer Waveform Container -->
-            <div id="waveform" class="mb-4"></div>
+            <div id="waveform" class="bg-gray-200 rounded-lg mb-4"></div>
             
-            <!-- HTML5 Audio Player -->
             <audio id="audioPlayer" controls class="w-full mb-4"></audio>
             
-            <div class="flex justify-between items-center">
-                <!-- Play/Pause Button (Controlled by Wavesurfer/HTML5 Audio) -->
-                <button id="playPauseBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Play / Pause
-                </button>
-                <!-- Download Button -->
-                <button id="downloadBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" disabled>
-                    Download MP3
+            <div class="flex justify-center md:justify-end items-center">
+                <button id="downloadBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150 ease-in-out" disabled>
+                    Download Audio
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- PENTING: Script.js harus dimuat di akhir body untuk memastikan semua elemen DOM sudah ada -->
+    <!-- Script utama Anda harus dimuat di akhir body -->
     <script src="script.js"></script>
 </body>
 </html>
