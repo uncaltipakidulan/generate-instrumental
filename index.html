@@ -35,11 +35,18 @@
             min-height: 80px;
             background-color: #f7fafc; /* gray-50 */
             border-radius: 0.5rem;
+            /* Tambahkan padding agar waveform tidak terlalu dekat dengan tepi */
+            padding: 0.5rem; 
         }
 
         /* Sembunyikan elemen secara default, akan ditampilkan oleh JS */
         #audioSection {
             display: none;
+        }
+        /* Mengatur agar audio player tidak terlalu besar secara default saat controls diaktifkan */
+        #audioPlayer {
+            max-width: 100%;
+            height: 50px; /* Tinggi standar untuk player HTML5 */
         }
     </style>
 
@@ -53,12 +60,14 @@
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl border border-gray-200">
         <h1 class="text-3xl font-extrabold text-center mb-6 text-gray-800">Generate Instrumental 🎵</h1>
 
+        <!-- Input Lirik / Deskripsi Musik -->
         <div class="mb-4">
             <label for="textInput" class="block text-gray-700 text-sm font-bold mb-2">Lirik atau Deskripsi Musik:</label>
             <textarea id="textInput" rows="6" class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out" placeholder="Masukkan lirik atau deskripsi suasana musik yang Anda inginkan..."></textarea>
             <p id="charCountDisplay" class="text-xs text-gray-500 text-right mt-1">0 karakter</p>
         </div>
 
+        <!-- Pilihan Genre Musik -->
         <div class="mb-4">
             <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">Pilih Genre Musik:</label>
             <select id="genreSelect" class="shadow-sm border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out">
@@ -70,14 +79,18 @@
                 <option value="blues">Blues</option>
                 <option value="jazz">Jazz</option>
                 <option value="hiphop">Hiphop</option>
+                <option value="latin">Latin</option> <!-- Tambahkan Latin -->
+                <option value="dangdut">Dangdut</option> <!-- Tambahkan Dangdut -->
             </select>
         </div>
 
+        <!-- Input Tempo (BPM) -->
         <div class="mb-6">
             <label for="tempoInput" class="block text-gray-700 text-sm font-bold mb-2">Tempo (BPM, kosongkan untuk auto):</label>
             <input type="number" id="tempoInput" class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out" placeholder="misalnya: 120">
         </div>
 
+        <!-- Tombol Generate -->
         <div class="flex items-center justify-center mb-6">
             <button id="generateBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out flex items-center justify-center">
                 <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -88,15 +101,40 @@
             </button>
         </div>
 
+        <!-- Pesan Status -->
         <p id="statusMsg" class="text-center text-gray-600 text-sm mb-4 min-h-[1.5em]"></p>
 
+        <!-- Bagian Hasil Audio -->
         <div id="audioSection" class="border-t border-gray-200 pt-6 mt-6">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Hasil Audio Anda</h2>
             
+            <!-- Metadata Audio -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-700 mb-4">
+                <div>
+                    <span class="font-semibold">Genre:</span> <span id="genreDisplay">N/A</span>
+                </div>
+                <div>
+                    <span class="font-semibold">Tempo:</span> <span id="tempoDisplay">N/A</span>
+                </div>
+                <div>
+                    <span class="font-semibold">Durasi Estimasi:</span> <span id="durationDisplay">N/A</span>
+                </div>
+                <div>
+                    <span class="font-semibold">Kata di Lirik:</span> <span id="lyricsWordCountDisplay">0</span>
+                </div>
+                <div>
+                    <span class="font-semibold">Suku Kata di Lirik:</span> <span id="lyricsSyllableCountDisplay">0</span>
+                </div>
+            </div>
+
+            <!-- Wavesurfer Waveform Visualizer -->
             <div id="waveform" class="bg-gray-200 rounded-lg mb-4"></div>
             
-            <audio id="audioPlayer" controls class="w-full mb-4"></audio>
+            <!-- HTML5 Audio Player -->
+            <!-- Atribut 'controls' akan ditambahkan/dihapus oleh JS -->
+            <audio id="audioPlayer" class="w-full mb-4"></audio> 
             
+            <!-- Tombol Download Audio -->
             <div class="flex justify-center md:justify-end items-center">
                 <button id="downloadBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150 ease-in-out" disabled>
                     Download Audio
