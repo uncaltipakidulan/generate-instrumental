@@ -564,9 +564,12 @@ document.addEventListener('DOMContentLoaded', function() {
     getWavesurferInstance(); 
     setupAudioContextResumeListeners(); // Setup listener setelah AudioContext diinisialisasi
        
-    // Contoh lirik otomatis jika kosong
+    // Contoh lirik otomatis jika kosong - DIPERBAIKI SyntaxError di sini
     if (textInput && !textInput.value.trim()) {
-        textInput.value = '[verse]\nSebuah melodi indah dengan piano lembut dan senar halus\n[chorus]\nEmosi yang meningkat menuju klimaks yang kuat';
+        textInput.value = `[verse]
+Sebuah melodi indah dengan piano lembut dan senar halus
+[chorus]
+Emosi yang meningkat menuju klimaks yang kuat`; // Menggunakan template literal (backticks) untuk string multiline
         if (statusMsg) {
             statusMsg.textContent = 'Contoh lirik dimuat. Edit dan klik "Generate Instrumental"!';
             statusMsg.className = 'text-blue-600';
