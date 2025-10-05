@@ -1,11 +1,16 @@
-// script.js - Final Revised Version for generate-instrumental (with Android Fixes)
+// script.js - Final Revised Version for generate-instrumental (with Android & Metadata Fixes)
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎵 Generate Instrumental script loaded. DOM content is ready.');
     
     // --- KONFIGURASI PENTING ---
+    // GANTI INI DENGAN URL BACKEND FLASK ANDA JIKA BERBEDA DARI LOKAL!
+    // Contoh jika backend di localhost:5000:
+    // const API_BASE_URL = 'http://127.0.0.1:5000';
+    // Contoh jika Anda menggunakan Pinggy atau layanan tunneling lain:
     const API_BASE_URL = 'https://dindwwctyp.a.pinggy.link'; // Ganti dengan URL Pinggy Anda
     
     // --- DOM Elements ---
+    // Pastikan semua ID ini ada di index.html Anda
     const textInput = document.getElementById('textInput');
     const genreSelect = document.getElementById('genreSelect');
     const tempoInput = document.getElementById('tempoInput');
@@ -17,12 +22,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusMsg = document.getElementById('statusMsg');
     const charCountDisplay = document.getElementById('charCountDisplay');
     const audioSection = document.getElementById('audioSection');
+    
+    // Elemen untuk menampilkan metadata (pastikan ID ini ada di index.html)
     const genreDisplay = document.getElementById('genreDisplay');
     const tempoDisplay = document.getElementById('tempoDisplay');
     const durationDisplay = document.getElementById('durationDisplay');
     const lyricsWordCountDisplay = document.getElementById('lyricsWordCountDisplay');
     const lyricsSyllableCountDisplay = document.getElementById('lyricsSyllableCountDisplay');
-
+    
     // --- State ---
     let wavesurferInstance = null;
     let currentAudioUrl = null;
@@ -53,8 +60,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         } else if (audioContext && audioContext.state === 'running') {
             // console.log('AudioContext is already running.');
-        } else {
-            // console.log('AudioContext not initialized or in a different state:', audioContext ? audioContext.state : 'N/A');
         }
     }
     
@@ -64,7 +69,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const resumeEvents = ['click', 'touchstart', 'touchend'];
         resumeEvents.forEach(event => {
             document.body.addEventListener(event, resumeAudioContext, { once: true });
-            // console.log(`Registered ${event} listener for AudioContext resume.`);
         });
     }
 
@@ -75,16 +79,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (typeof WaveSurfer === 'undefined') {
-            console.error('❌ Wavesurfer.js library is not loaded.');
-            statusMsg.textContent = 'Visualizer audio tidak dapat dimuat (library Wavesurfer.js hilang).';
-            statusMsg.className = 'text-red-600';
+            console.error('❌ Wavesurfer.js library is not loaded. Check script tag in HTML.');
+            if (statusMsg) {
+                statusMsg.textContent = 'Visualizer audio tidak dapat dimuat (library Wavesurfer.js hilang).';
+                statusMsg.className = 'text-red-600';
+            }
             return null;
         }
 
         if (!wavesurferContainer) {
-            console.warn('⚠️ Wavesurfer container (#waveform) not found.');
-            statusMsg.textContent = 'Visualizer audio tidak tersedia (kontainer #waveform hilang).';
-            statusMsg.className = 'text-yellow-600';
+            console.warn('⚠️ Wavesurfer container (#waveform) not found. Audio visualizer will not be available.');
+            if (statusMsg) {
+                statusMsg.textContent = 'Visualizer audio tidak tersedia (kontainer #waveform hilang).';
+                statusMsg.className = 'text-yellow-600';
+            }
             return null;
         }
            
@@ -105,13 +113,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         wavesurferInstance.on('ready', () => {
             console.log('✅ Wavesurfer ready.');
-            // Ini mungkin tidak perlu di update statusMsg lagi di sini
         });
         
         wavesurferInstance.on('error', (error) => {
             console.error('❌ Wavesurfer error:', error);
-            statusMsg.textContent = 'Error pada visualizer audio: ' + error.message;
-            statusMsg.className = 'text-red-600';
+            if (statusMsg) {
+                statusMsg.textContent = 'Error pada visualizer audio: ' + error.message;
+                statusMsg.className = 'text-red-600';
+            }
             // Fallback ke HTML5 audio jika Wavesurfer gagal
             if (audioPlayer && currentAudioUrl) {
                 audioPlayer.src = currentAudioUrl;
@@ -121,19 +130,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         wavesurferInstance.on('loading', (progress) => {
-            // Ini juga mungkin tidak perlu update statusMsg lagi di sini
+            if (statusMsg) {
+                statusMsg.textContent = `Memuat visualizer... ${Math.round(progress)}%`;
+            }
         });
 
         // Sinkronisasi Wavesurfer dengan audioPlayer (diperbaiki agar lebih robust)
         if (audioPlayer) {
             let isSeeking = false;
             audioPlayer.addEventListener('play', () => {
-                // Pastikan AudioContext di-resume saat play
-                resumeAudioContext(); 
-                if (wavesurferInstance && wavesurferInstance.getDuration() > 0 && !isSeeking) wavesurferInstance.play();
+                resumeAudioContext(); // Pastikan AudioContext di-resume saat play
+                if (wavesurferInstance && wavesurferInstance.getDuration() > 0 && !isSeeking) {
+                    wavesurferInstance.play();
+                }
             });
             audioPlayer.addEventListener('pause', () => {
-                if (wavesurferInstance && wavesurferInstance.isPlaying()) wavesurferInstance.pause();
+                if (wavesurferInstance && wavesurferInstance.isPlaying()) {
+                    wavesurferInstance.pause();
+                }
             });
             audioPlayer.addEventListener('seeking', () => { isSeeking = true; });
             audioPlayer.addEventListener('seeked', () => {
@@ -165,6 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Memastikan URL adalah absolute untuk Wavesurfer
         let fullAudioUrl = audioUrl;
         if (audioUrl.startsWith('/')) { // Jika relatif, gabungkan dengan API_BASE_URL
             fullAudioUrl = API_BASE_URL + audioUrl;
@@ -172,8 +187,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!fullAudioUrl.startsWith('http')) {
             console.error('❌ URL audio yang dihasilkan bukan URL absolut:', fullAudioUrl);
-            statusMsg.textContent = 'URL audio tidak valid. Periksa konfigurasi API_BASE_URL atau respons backend.';
-            statusMsg.className = 'text-red-600';
+            if (statusMsg) {
+                statusMsg.textContent = 'URL audio tidak valid. Periksa konfigurasi API_BASE_URL atau respons backend.';
+                statusMsg.className = 'text-red-600';
+            }
             return;
         }
         
@@ -186,11 +203,13 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('🔄 Wavesurfer memuat audio dari:', fullAudioUrl);
             ws.load(fullAudioUrl).then(() => {
                 console.log('✅ Wavesurfer berhasil memuat audio baru.');
-                // Wavesurfer tidak akan auto-play, jadi statusMsg bisa di update di generateInstrumental
             }).catch(error => {
                 console.error('❌ Wavesurfer.load() gagal:', error);
-                statusMsg.textContent = 'Gagal memuat audio ke visualizer. Coba putar audio di player standar.';
-                statusMsg.className = 'text-red-600';
+                if (statusMsg) {
+                    statusMsg.textContent = 'Gagal memuat audio ke visualizer. Coba putar audio di player standar.';
+                    statusMsg.className = 'text-red-600';
+                }
+                // Fallback ke HTML5 audio jika Wavesurfer gagal
                 if (audioPlayer) {
                     audioPlayer.src = fullAudioUrl;
                     audioPlayer.load();
@@ -206,11 +225,11 @@ document.addEventListener('DOMContentLoaded', function() {
     async function generateInstrumental() {
         if (isGenerating) return;
         
-        // Pastikan AudioContext di-resume pada interaksi pengguna
+        // Pastikan AudioContext di-resume pada interaksi pengguna (klik tombol generate)
         resumeAudioContext(); 
 
         if (!textInput || !genreSelect || !tempoInput || !generateBtn || !loadingSpinner || !statusMsg || !audioSection) {
-            console.error('❌ Beberapa elemen DOM penting tidak ditemukan.');
+            console.error('❌ Beberapa elemen DOM penting tidak ditemukan. Periksa ID HTML Anda.');
             alert('Beberapa bagian penting halaman tidak ditemukan. Mohon refresh halaman atau hubungi administrator.');
             return;
         }
@@ -237,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
             audioPlayer.pause();
             audioPlayer.currentTime = 0;
             audioPlayer.src = '';
-            audioPlayer.removeAttribute('controls');
+            audioPlayer.removeAttribute('controls'); // Sembunyikan kontrol saat loading
             // Pastikan Wavesurfer juga direset jika ada
             if (wavesurferInstance) {
                 wavesurferInstance.pause();
@@ -249,13 +268,20 @@ document.addEventListener('DOMContentLoaded', function() {
             downloadBtn.disabled = true;
             downloadBtn.textContent = 'Download Audio';
         }
-        audioSection.style.display = 'none';
+        audioSection.style.display = 'none'; // Sembunyikan hasil lama
            
+        // Reset tampilan metadata
+        if (genreDisplay) genreDisplay.textContent = 'N/A';
+        if (tempoDisplay) tempoDisplay.textContent = 'N/A';
+        if (durationDisplay) durationDisplay.textContent = 'N/A';
+        if (lyricsWordCountDisplay) lyricsWordCountDisplay.textContent = '0';
+        if (lyricsSyllableCountDisplay) lyricsSyllableCountDisplay.textContent = '0';
+
         try {
             const requestData = {
-                lyrics: lyrics,
+                lyrics: lyrics,   // ✅ FIX: Menggunakan "lyrics" sesuai backend
                 genre: genre,
-                tempo: tempo
+                tempo: tempo      // Tempo tidak digunakan di backend, tapi tidak masalah dikirim
             };
                
             console.log('📤 Mengirim permintaan ke:', `${API_BASE_URL}/generate-instrumental`, requestData);
@@ -266,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.warn('⚠️ Permintaan dibatalkan karena timeout (3 menit).');
                 statusMsg.textContent = 'Permintaan melebihi batas waktu (3 menit). Coba lagi dengan lirik yang lebih pendek atau periksa koneksi server.';
                 statusMsg.className = 'text-red-600';
-            }, 180000);
+            }, 180000); // Timeout 3 menit (180 detik)
                
             const response = await fetch(`${API_BASE_URL}/generate-instrumental`, {
                 method: 'POST',
@@ -297,23 +323,70 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(result.error || result.message || 'Server mengembalikan status error.');
             }
             
+            // Backend sekarang mengembalikan audio_url (path relatif) dan download_url (URL absolut)
             if (!result.audio_url || !result.download_url) {
                 throw new Error('Server tidak mengembalikan URL audio yang valid.');
             }
                
-            currentAudioUrl = API_BASE_URL + result.audio_url;
-            currentDownloadUrl = result.download_url;
+            currentAudioUrl = API_BASE_URL + result.audio_url; // URL untuk player Wavesurfer/HTML5 (harus absolut)
+            currentDownloadUrl = result.download_url; // URL absolut untuk download
             
             console.log('🎵 URL Audio untuk player:', currentAudioUrl);
             console.log('📥 URL Download:', currentDownloadUrl);
                
-            audioSection.style.display = 'block';
-               
+            audioSection.style.display = 'block'; // Tampilkan bagian hasil
+            
+            // --- DEBUGGING METADATA ---
+            console.log('🔍 DEBUG: Updating metadata UI...');
+            console.log('Received result for metadata:', result); // Log hasil keseluruhan untuk debugging
+
+            if (genreDisplay) {
+                const genreValue = result.genre || 'N/A';
+                genreDisplay.textContent = genreValue;
+                console.log(`✅ Genre updated: "${genreValue}"`);
+            } else {
+                console.error('❌ genreDisplay element not found or is null!');
+            }
+
+            if (tempoDisplay) {
+                const tempoValue = result.tempo || 'N/A';
+                tempoDisplay.textContent = tempoValue;
+                console.log(`✅ Tempo updated: "${tempoValue}"`);
+            } else {
+                console.error('❌ tempoDisplay element not found or is null!');
+            }
+
+            if (durationDisplay) {
+                const durationValue = result.estimated_duration || 'N/A';
+                durationDisplay.textContent = durationValue;
+                console.log(`✅ Duration updated: "${durationValue}"`);
+            } else {
+                console.error('❌ durationDisplay element not found or is null!');
+            }
+
+            if (lyricsWordCountDisplay) {
+                const wordCountValue = result.lyrics_word_count || '0';
+                lyricsWordCountDisplay.textContent = wordCountValue;
+                console.log(`✅ Word count updated: "${wordCountValue}"`);
+            } else {
+                console.error('❌ lyricsWordCountDisplay element not found or is null!');
+            }
+
+            if (lyricsSyllableCountDisplay) {
+                const syllableCountValue = result.lyrics_syllable_count || '0';
+                lyricsSyllableCountDisplay.textContent = syllableCountValue;
+                console.log(`✅ Syllable count updated: "${syllableCountValue}"`);
+            } else {
+                console.error('❌ lyricsSyllableCountDisplay element not found or is null!');
+            }
+            console.log('🔍 DEBUG: Metadata UI update complete.');
+            // --- AKHIR DEBUGGING METADATA ---
+            
             // Set HTML5 audio player
             if (audioPlayer) {
                 audioPlayer.src = currentAudioUrl;
                 audioPlayer.load(); // Memuat audio
-                audioPlayer.setAttribute('controls', 'true');
+                audioPlayer.setAttribute('controls', 'true'); // Tampilkan kontrol setelah loading
                 
                 audioPlayer.addEventListener('canplaythrough', () => { // Gunakan canplaythrough
                     console.log('✅ Audio siap diputar di HTML5 player.');
@@ -325,8 +398,10 @@ document.addEventListener('DOMContentLoaded', function() {
                    
                 audioPlayer.addEventListener('error', (e) => {
                     console.error('❌ HTML5 Audio player error:', e);
-                    statusMsg.textContent = 'Error memuat file audio di player standar. Periksa konsol browser.';
-                    statusMsg.className = 'text-red-600';
+                    if (statusMsg) {
+                        statusMsg.textContent = 'Error memuat file audio di player standar. Periksa konsol browser.';
+                        statusMsg.className = 'text-red-600';
+                    }
                 });
             }
                
@@ -339,17 +414,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 500); 
             } else {
                 console.warn('⚠️ Format audio tidak didukung oleh visualizer (hanya MP3/WAV). Player standar akan digunakan.');
-                statusMsg.textContent = 'Format audio tidak didukung visualizer. Gunakan player standar.';
-                statusMsg.className = 'text-yellow-600';
+                if (statusMsg) {
+                    statusMsg.textContent = 'Format audio tidak didukung visualizer. Gunakan player standar.';
+                    statusMsg.className = 'text-yellow-600';
+                }
             }
             
-            // Update info di UI
-            if (genreDisplay) genreDisplay.textContent = result.genre || 'N/A';
-            if (tempoDisplay) tempoDisplay.textContent = result.tempo || 'N/A';
-            if (durationDisplay) durationDisplay.textContent = result.estimated_duration || 'N/A';
-            if (lyricsWordCountDisplay) lyricsWordCountDisplay.textContent = result.lyrics_word_count || '0';
-            if (lyricsSyllableCountDisplay) lyricsSyllableCountDisplay.textContent = result.lyrics_syllable_count || '0';
-
             if (downloadBtn) {
                 downloadBtn.disabled = false;
                 downloadBtn.textContent = `Download (${result.filesize_kb} KB)`;
@@ -393,19 +463,20 @@ document.addEventListener('DOMContentLoaded', function() {
        
     // --- Download Handler ---
     function downloadAudio() {
-        if (!currentDownloadUrl) {
+        if (!currentDownloadUrl) { // Gunakan currentDownloadUrl yang absolut
             alert('⚠️ Tidak ada file audio untuk di-download!');
             return;
         }
            
         try {
             const link = document.createElement('a');
-            link.href = currentDownloadUrl;
+            link.href = currentDownloadUrl; // Gunakan URL absolut dari backend
                
+            // Backend sudah memberikan filename, gunakan itu jika ada di URL
             let filename = `instrumental_${new Date().toISOString().slice(0, 10)}.mp3`;
             const urlParts = currentDownloadUrl.split('/');
             const potentialFilename = urlParts[urlParts.length - 1];
-            if (potentialFilename.match(/^[a-f0-9]{8}_[0-9]+\.(mp3|wav|mid)$/)) {
+            if (potentialFilename.match(/^[a-f0-9]{8}_[0-9]+\.(mp3|wav|mid)$/)) { // Validasi format filename
                  filename = potentialFilename;
             }
             link.download = filename;
@@ -524,3 +595,4 @@ window.addEventListener('unhandledrejection', (event) => {
     console.warn('⚠️ Unhandled promise rejection (frontend):', event.reason);
     event.preventDefault();
 });
+
