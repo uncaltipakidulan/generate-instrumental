@@ -4,14 +4,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- KONFIGURASI PENTING ---
     // GANTI INI DENGAN URL BACKEND FLASK ANDA JIKA BERBEDA DARI LOKAL!
-    // Contoh jika backend di localhost:5000:
-    const API_BASE_URL = 'https://dindwwctyp.a.pinggy.link';
+    // Jika backend berjalan lokal di port 5000:
+    // const API_BASE_URL = 'http://127.0.0.1:5000';
+    // Jika Anda menggunakan Pinggy atau layanan tunneling lain:
+    const API_BASE_URL = 'https://dindwwctyp.a.pinggy.link'; // Ganti dengan URL Pinggy Anda
     // Contoh jika backend di deploy ke server:
     // const API_BASE_URL = 'https://api.yourdomain.com'; 
     // Atau jika frontend dan backend di server yang sama dan Anda ingin menggunakan path relatif:
     // const API_BASE_URL = ''; 
-    // Jika Anda menjalankan frontend dari GitHub Pages dan backend dari Pinggy:
-    // const API_BASE_URL = 'https://dindwwctyp.a.pinggy.link'; // Ganti dengan URL Pinggy Anda
     
     // --- DOM Elements ---
     const textInput = document.getElementById('textInput');
@@ -25,10 +25,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusMsg = document.getElementById('statusMsg');
     const charCountDisplay = document.getElementById('charCountDisplay');
     const audioSection = document.getElementById('audioSection');
+    const genreDisplay = document.getElementById('genreDisplay');
+    const tempoDisplay = document.getElementById('tempoDisplay');
+    const durationDisplay = document.getElementById('durationDisplay');
+    const lyricsWordCountDisplay = document.getElementById('lyricsWordCountDisplay');
+    const lyricsSyllableCountDisplay = document.getElementById('lyricsSyllableCountDisplay');
+
     
     // --- State ---
     let wavesurferInstance = null;
     let currentAudioUrl = null;
+    let currentDownloadUrl = null; // Tambahkan ini untuk URL download
     let isGenerating = false;
     let audioContext = null;
     
@@ -61,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- Wavesurfer Initialization and Update ---
     // Fungsi untuk menginisialisasi atau mendapatkan instance Wavesurfer
-    function getWavesurferInstance() { // Tidak lagi async karena dimuat global
+    function getWavesurferInstance() {
         if (wavesurferInstance) {
             return wavesurferInstance;
         }
@@ -106,10 +113,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusMsg.className = 'text-green-600';
             }
             // Sync player standar jika Wavesurfer selesai loading
-            if (audioPlayer && currentAudioUrl) {
-                audioPlayer.src = currentAudioUrl;
-                audioPlayer.load();
-            }
+            // Jangan langsung set audioPlayer.src di sini, karena sudah diatur di generateInstrumental
+            // audioPlayer.load(); // Ini bisa memicu re-load jika tidak hati-hati
         });
         
         wavesurferInstance.on('error', (error) => {
@@ -133,8 +138,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Sinkronisasi Wavesurfer dengan audioPlayer
         if (audioPlayer) {
-            audioPlayer.addEventListener('play', () => wavesurferInstance.play());
-            audioPlayer.addEventListener('pause', () => wavesurferInstance.pause());
+            audioPlayer.addEventListener('play', () => {
+                if (wavesurferInstance && currentAudioUrl && wavesurferInstance.getDuration() > 0) wavesurferInstance.play();
+            });
+            audioPlayer.addEventListener('pause', () => {
+                if (wavesurferInstance && wavesurferInstance.isPlaying()) wavesurferInstance.pause();
+            });
             audioPlayer.addEventListener('seeked', () => {
                 if (wavesurferInstance && wavesurferInstance.getDuration() > 0) {
                     wavesurferInstance.seekTo(audioPlayer.currentTime / audioPlayer.duration);
@@ -145,6 +154,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     wavesurferInstance.setVolume(audioPlayer.volume);
                 }
             });
+            audioPlayer.addEventListener('timeupdate', () => {
+                if (wavesurferInstance && wavesurferInstance.getDuration() > 0 && !wavesurferInstance.isPlaying()) {
+                    // Update wavesurfer position manually if audioPlayer is playing but wavesurfer is not
+                    wavesurferInstance.seekTo(audioPlayer.currentTime / audioPlayer.duration);
+                }
+            });
         }
         
         console.log('✅ Wavesurfer instance created and initialized.');
@@ -152,16 +167,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
        
     async function updateWavesurfer(audioUrl) {
-        const ws = getWavesurferInstance(); // Panggil non-async
+        const ws = getWavesurferInstance();
         if (!ws || !audioUrl) {
             console.warn('⚠️ Tidak dapat memperbarui Wavesurfer: instance atau URL tidak valid.');
             return;
         }
         
-        if (!audioUrl.startsWith('http') && !audioUrl.startsWith('/')) {
-            console.warn('⚠️ URL audio dari server tidak valid:', audioUrl);
+        // Memastikan URL adalah absolute untuk Wavesurfer
+        let fullAudioUrl = audioUrl;
+        if (audioUrl.startsWith('/')) { // Jika relatif, gabungkan dengan API_BASE_URL
+            fullAudioUrl = API_BASE_URL + audioUrl;
+        }
+
+        if (!fullAudioUrl.startsWith('http')) {
+            console.error('❌ URL audio yang dihasilkan bukan URL absolut:', fullAudioUrl);
             if (statusMsg) {
-                statusMsg.textContent = 'URL audio dari server tidak valid. Periksa konsol backend.';
+                statusMsg.textContent = 'URL audio tidak valid. Periksa konfigurasi API_BASE_URL atau respons backend.';
                 statusMsg.className = 'text-red-600';
             }
             return;
@@ -173,16 +194,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             ws.empty(); // Bersihkan waveform yang lama
             
-            ws.load(audioUrl).then(() => {
-                console.log('✅ Wavesurfer memuat audio baru:', audioUrl);
+            console.log('🔄 Wavesurfer memuat audio dari:', fullAudioUrl);
+            ws.load(fullAudioUrl).then(() => {
+                console.log('✅ Wavesurfer berhasil memuat audio baru.');
                 if (statusMsg) {
                     statusMsg.textContent = 'Audio dimuat ke visualizer.';
                     statusMsg.className = 'text-green-600';
                 }
-                if (downloadBtn) {
-                    downloadBtn.disabled = false;
-                    downloadBtn.textContent = 'Download Audio';
-                }
+                // Tombol download akan diaktifkan di generateInstrumental, bukan di sini
             }).catch(error => {
                 console.error('❌ Wavesurfer.load() gagal:', error);
                 if (statusMsg) {
@@ -191,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 // Fallback ke HTML5 audio jika Wavesurfer gagal
                 if (audioPlayer) {
-                    audioPlayer.src = audioUrl;
+                    audioPlayer.src = fullAudioUrl;
                     audioPlayer.load();
                 }
             });
@@ -213,7 +232,8 @@ document.addEventListener('DOMContentLoaded', function() {
            
         const lyrics = textInput.value.trim();
         const genre = genreSelect.value;
-        const tempo = tempoInput.value || 'auto';
+        // Tempo tidak digunakan di backend Flask Anda, tapi bisa tetap dikirim
+        const tempo = tempoInput.value || 'auto'; 
            
         if (!lyrics) {
             alert('⚠️ Masukkan lirik atau deskripsi musik terlebih dahulu!');
@@ -233,6 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
             audioPlayer.pause();
             audioPlayer.currentTime = 0;
             audioPlayer.src = '';
+            audioPlayer.removeAttribute('controls'); // Sembunyikan kontrol saat loading
         }
            
         if (wavesurferInstance) {
@@ -248,17 +269,22 @@ document.addEventListener('DOMContentLoaded', function() {
            
         try {
             const requestData = {
-                text: lyrics,
+                lyrics: lyrics,   // ✅ FIX: Menggunakan "lyrics" sesuai backend
                 genre: genre,
-                tempo: tempo
+                tempo: tempo      // Tempo tidak digunakan di backend, tapi tidak masalah dikirim
             };
                
             console.log('📤 Mengirim permintaan ke:', `${API_BASE_URL}/generate-instrumental`, requestData);
                
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 180000); // Timeout 3 menit (180 detik)
+            const timeoutId = setTimeout(() => {
+                controller.abort();
+                console.warn('⚠️ Permintaan dibatalkan karena timeout (3 menit).');
+                statusMsg.textContent = 'Permintaan melebihi batas waktu (3 menit). Coba lagi dengan lirik yang lebih pendek.';
+                statusMsg.className = 'text-red-600';
+            }, 180000); // Timeout 3 menit (180 detik)
                
-            const response = await fetch(`${API_BASE_URL}/generate-instrumental`, { // Gunakan API_BASE_URL di sini!
+            const response = await fetch(`${API_BASE_URL}/generate-instrumental`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -270,13 +296,12 @@ document.addEventListener('DOMContentLoaded', function() {
             clearTimeout(timeoutId);
                
             if (!response.ok) {
-                // Tangkap error dengan lebih baik
                 let errorMessage = `HTTP error! Status: ${response.status}`;
                 try {
                     const errorBody = await response.json();
                     errorMessage = errorBody.error || errorBody.message || errorMessage;
                 } catch (jsonError) {
-                    errorMessage = `${response.statusText || 'Unknown error'} (Failed to parse error response).`;
+                    errorMessage = `${response.statusText || 'Unknown error'} (Gagal mengurai respons error).`;
                 }
                 throw new Error(errorMessage);
             }
@@ -284,16 +309,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             console.log('📥 Respon diterima:', result);
                
-            if (result.error) {
-                throw new Error(result.error);
+            if (result.status === 'error' || result.error) {
+                throw new Error(result.error || result.message || 'Server mengembalikan status error.');
             }
-               
-            if (!result.wav_url && !result.midi_url) {
+            
+            // Backend sekarang mengembalikan audio_url (relatif) dan download_url (absolut)
+            if (!result.audio_url || !result.download_url) {
                 throw new Error('Server tidak mengembalikan URL audio yang valid.');
             }
                
-            currentAudioUrl = API_BASE_URL + (result.wav_url || result.midi_url); // Gabungkan dengan API_BASE_URL untuk path relatif
-            console.log('🎵 URL Audio yang akan digunakan:', currentAudioUrl);
+            currentAudioUrl = API_BASE_URL + result.audio_url; // URL untuk player Wavesurfer/HTML5 (harus absolut)
+            currentDownloadUrl = result.download_url; // URL absolut untuk download
+            
+            console.log('🎵 URL Audio untuk player:', currentAudioUrl);
+            console.log('📥 URL Download:', currentDownloadUrl);
                
             audioSection.style.display = 'block'; // Tampilkan bagian hasil
                
@@ -301,6 +330,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (audioPlayer) {
                 audioPlayer.src = currentAudioUrl;
                 audioPlayer.load();
+                audioPlayer.setAttribute('controls', 'true'); // Tampilkan kontrol setelah loading
                 
                 audioPlayer.addEventListener('canplay', () => {
                     console.log('✅ Audio siap diputar di HTML5 player.');
@@ -321,6 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
                
             // Update Wavesurfer jika URL adalah MP3/WAV
             if (currentAudioUrl.endsWith('.mp3') || currentAudioUrl.endsWith('.wav')) {
+                // Beri sedikit jeda agar player HTML5 sempat memuat metadata awal
                 setTimeout(() => {
                     updateWavesurfer(currentAudioUrl);
                 }, 500); 
@@ -330,12 +361,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     statusMsg.textContent = 'Format audio tidak didukung visualizer. Gunakan player standar.';
                     statusMsg.className = 'text-yellow-600';
                 }
-                if (downloadBtn) { // Tetap aktifkan download
-                    downloadBtn.disabled = false;
-                    downloadBtn.textContent = 'Download Audio';
-                }
             }
-               
+            
+            // Update info di UI
+            if (genreDisplay) genreDisplay.textContent = result.genre || 'N/A';
+            if (tempoDisplay) tempoDisplay.textContent = result.tempo || 'N/A';
+            if (durationDisplay) durationDisplay.textContent = result.estimated_duration || 'N/A';
+            if (lyricsWordCountDisplay) lyricsWordCountDisplay.textContent = result.lyrics_word_count || '0';
+            if (lyricsSyllableCountDisplay) lyricsSyllableCountDisplay.textContent = result.lyrics_syllable_count || '0';
+
+            if (downloadBtn) {
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = `Download (${result.filesize_kb} KB)`;
+            }
+
             if (statusMsg && !statusMsg.textContent.includes("Error")) {
                 statusMsg.textContent = 'Instrumental berhasil dibuat! 🎉';
                 statusMsg.className = 'text-green-600';
@@ -375,18 +414,21 @@ document.addEventListener('DOMContentLoaded', function() {
        
     // --- Download Handler ---
     function downloadAudio() {
-        if (!currentAudioUrl) {
+        if (!currentDownloadUrl) { // Gunakan currentDownloadUrl yang absolut
             alert('⚠️ Tidak ada file audio untuk di-download!');
             return;
         }
            
         try {
             const link = document.createElement('a');
-            link.href = currentAudioUrl;
+            link.href = currentDownloadUrl; // Gunakan URL absolut dari backend
                
+            // Backend sudah memberikan filename, gunakan itu jika ada di URL
             let filename = `instrumental_${new Date().toISOString().slice(0, 10)}.mp3`;
-            if (currentAudioUrl.includes('/static/audio_output/')) {
-                filename = currentAudioUrl.split('/').pop();
+            const urlParts = currentDownloadUrl.split('/');
+            const potentialFilename = urlParts[urlParts.length - 1];
+            if (potentialFilename.match(/^[a-f0-9]{8}_[0-9]+\.(mp3|wav|mid)$/)) { // Validasi format filename
+                 filename = potentialFilename;
             }
             link.download = filename;
                
@@ -418,16 +460,22 @@ document.addEventListener('DOMContentLoaded', function() {
             await generateInstrumental();
         }
            
-        if (e.key === ' ' && (audioPlayer || wavesurferInstance)) {
+        // Hanya memproses spasi jika tidak sedang di input/textarea
+        const isInputActive = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+        if (e.key === ' ' && !isInputActive) {
             e.preventDefault();
-            if (wavesurferInstance && wavesurferInstance.isReady && wavesurferInstance.isPlaying()) {
-                wavesurferInstance.pause();
-            } else if (wavesurferInstance && wavesurferInstance.isReady && !wavesurferInstance.isPlaying()) {
-                await wavesurferInstance.play().catch(err => console.warn('Wavesurfer play failed:', err));
-            } else if (audioPlayer && !audioPlayer.paused) {
-                audioPlayer.pause();
-            } else if (audioPlayer && audioPlayer.src) {
-                await audioPlayer.play().catch(err => console.warn('Audio player play failed:', err));
+            if (wavesurferInstance && wavesurferInstance.isReady && currentAudioUrl) {
+                if (wavesurferInstance.isPlaying()) {
+                    wavesurferInstance.pause();
+                } else {
+                    await wavesurferInstance.play().catch(err => console.warn('Wavesurfer play failed:', err));
+                }
+            } else if (audioPlayer && audioPlayer.src) { // Fallback ke player standar
+                if (!audioPlayer.paused) {
+                    audioPlayer.pause();
+                } else {
+                    await audioPlayer.play().catch(err => console.warn('Audio player play failed:', err));
+                }
             }
         }
     });
@@ -483,8 +531,8 @@ window.addEventListener('error', (event) => {
     const nonCritical = [
         'clearMessagesCache', '-moz-osx-font-smoothing', '-webkit-text-size-adjust',
         'DOMException: The operation was aborted', 'Invalid URI. Load of media resource  failed',
-        'TypeError: playPauseBtn is null' // Tambahkan ini jika Anda masih melihatnya
-    ];
+        'TypeError: playPauseBtn is null', 'Failed to load media' 
+    ]; // Tambah 'Failed to load media'
     const isCritical = !nonCritical.some(msg => event.error.message.includes(msg) || (event.error.stack && event.error.stack.includes(msg)));
        
     if (isCritical) {
