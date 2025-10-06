@@ -188,14 +188,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Memastikan URL adalah absolute untuk Wavesurfer
+        // REVISI: Asumsi bahwa `audioUrl` dari backend sudah absolut atau API_BASE_URL+audio_url
         let fullAudioUrl = audioUrl;
-        // REVISI: Logic ini tidak diperlukan jika backend mengembalikan URL absolut penuh.
-        // Jika backend mengembalikan path relatif seperti '/static/audio_output/xxx.mp3',
-        // maka logic ini benar. Sesuaikan dengan apa yang benar-benar dikembalikan backend Anda.
-        // Asumsi saat ini: backend mengembalikan full absolute URL.
-        // if (audioUrl.startsWith('/')) { // Jika relatif, gabungkan dengan API_BASE_URL
-        //     fullAudioUrl = API_BASE_URL + audioUrl;
-        // }
 
         if (!fullAudioUrl.startsWith('http')) {
             console.error('❌ URL audio yang dihasilkan bukan URL absolut:', fullAudioUrl);
@@ -203,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusMsg.textContent = 'URL audio tidak valid. Periksa konfigurasi API_BASE_URL atau respons backend.';
                 statusMsg.className = 'text-red-600';
             }
-            // REVISI: Jangan return, coba muat ke audioPlayer sebagai fallback.
+            // REVISI: Tetap lanjutkan, Wavesurfer mungkin bisa mengatasinya atau HTML5 player akan menjadi fallback.
         }
         
         try {
@@ -343,6 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.error) { // Jika backend secara eksplisit mengembalikan 'error'
                 throw new Error(result.error);
             }
+            // Backend flask yang saya buat mengembalikan 'success: true' bukan 'status: success'
             if (!result.success) { // Jika backend tidak mengembalikan 'success: true'
                  throw new Error(result.message || 'Server mengembalikan respons yang tidak berhasil.');
             }
@@ -548,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // REVISI: Pastikan hanya tombol generate yang aktif ketika Ctrl/Cmd + Enter ditekan
         if (textInput && (e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
-            if (!generateBtn.disabled) { // REVISI: Hanya generate jika tombol tidak disabled
+            if (generateBtn && !generateBtn.disabled) { // REVISI: Hanya generate jika tombol tidak disabled
                 await generateInstrumental();
             }
         }
@@ -629,19 +624,28 @@ window.addEventListener('error', (event) => {
     // REVISI: Perbaikan pesan error agar lebih spesifik dan tidak mengacaukan log
     console.error('💥 Global error (unhandled exception):', event.error);
     const nonCritical = [
-        'clearMessagesCache', '-moz-osx-font-smoothing', '-webkit-text-size-adjust',
-        'DOMException: The operation was aborted', 'Invalid URI. Load of media resource  failed',
-        'TypeError: playPauseBtn is null', 'Failed to load media', 'A network error occurred',
-        'SyntaxError: '' string literal contains an unescaped line break' // REVISI: Tambahkan ini
+        'clearMessagesCache', 
+        '-moz-osx-font-smoothing', 
+        '-webkit-text-size-adjust',
+        'DOMException: The operation was aborted', 
+        'Invalid URI. Load of media resource  failed',
+        'TypeError: playPauseBtn is null', 
+        'Failed to load media', 
+        'A network error occurred',
+        // PERBAIKAN DI SINI: Menggunakan kutip ganda untuk string yang berisi kutip tunggal
+        "SyntaxError: ' string literal contains an unescaped line break", 
+        "Missing data for 'punkt_tab'", // REVISI: Ini error NLTK yang sering muncul di backend
+        "Could not move source file" // REVISI: Error Firefox yang tidak relevan
     ];
-    // REVISI: Cek event.message dan event.filename/event.lineno untuk debugging SyntaxError
+    // REVISI: Cek event.message dan event.error.message karena kadang error ada di event.message
     const isCritical = !nonCritical.some(msg => 
         (event.message && event.message.includes(msg)) || 
-        (event.error && event.error.message && event.error.message.includes(msg))
+        (event.error && event.error.message && event.error.message.includes(msg)) ||
+        (typeof event.error === 'string' && event.error.includes(msg)) // Untuk error yang mungkin string
     );
        
     if (isCritical) {
-        console.warn('⚡️ KESALAHAN KRITIS: ', event.message || event.error.message);
+        console.warn('⚡️ KESALAHAN KRITIS: ', event.message || (event.error && event.error.message) || String(event.error));
     }
 });
    
