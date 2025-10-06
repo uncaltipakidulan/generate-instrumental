@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Contoh jika backend di localhost:5000:
     // const API_BASE_URL = 'http://127.0.0.1:5000';
     // Contoh jika Anda menggunakan Pinggy atau layanan tunneling lain:
-    const API_BASE_URL = 'https://dindwwctyp.a.pinggy.link'; // Ganti dengan URL Pinggy Anda
+    const API_BASE_URL = 'https://dindwwctyp.a.pinggy.link'; // REVISI: Ganti dengan URL Pinggy Anda (pastikan ini adalah URL backend, bukan frontend GitHub Pages)
     
     // --- DOM Elements ---
     // Pastikan semua ID ini ada di index.html Anda
@@ -68,12 +68,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupAudioContextResumeListeners() {
         const resumeEvents = ['click', 'touchstart', 'touchend'];
         resumeEvents.forEach(event => {
+            // REVISI: Gunakan { once: true } untuk memastikan hanya sekali dipicu dan tidak mengganggu performa
             document.body.addEventListener(event, resumeAudioContext, { once: true });
         });
     }
 
     // --- Wavesurfer Initialization and Update ---
     function getWavesurferInstance() {
+        // REVISI: Periksa apakah wavesurferInstance sudah ada
         if (wavesurferInstance) {
             return wavesurferInstance;
         }
@@ -84,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusMsg.textContent = 'Visualizer audio tidak dapat dimuat (library Wavesurfer.js hilang).';
                 statusMsg.className = 'text-red-600';
             }
-            return null;
+            return null; // REVISI: Return null jika Wavesurfer tidak dimuat
         }
 
         if (!wavesurferContainer) {
@@ -93,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusMsg.textContent = 'Visualizer audio tidak tersedia (kontainer #waveform hilang).';
                 statusMsg.className = 'text-yellow-600';
             }
-            return null;
+            return null; // REVISI: Return null jika container tidak ditemukan
         }
            
         wavesurferInstance = WaveSurfer.create({
@@ -113,6 +115,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         wavesurferInstance.on('ready', () => {
             console.log('✅ Wavesurfer ready.');
+            // REVISI: Set volume wavesurfer sesuai audioPlayer saat ready
+            if (audioPlayer) wavesurferInstance.setVolume(audioPlayer.volume);
         });
         
         wavesurferInstance.on('error', (error) => {
@@ -153,7 +157,10 @@ document.addEventListener('DOMContentLoaded', function() {
             audioPlayer.addEventListener('seeked', () => {
                 isSeeking = false;
                 if (wavesurferInstance && wavesurferInstance.getDuration() > 0) {
-                    wavesurferInstance.seekTo(audioPlayer.currentTime / audioPlayer.duration);
+                    // REVISI: Pastikan pembaruan posisi seek hanya jika Wavesurfer belum memutar atau tidak sedang di-seeking oleh Wavesurfer sendiri
+                    if (!wavesurferInstance.isPlaying()) { // Mencegah loop saat Wavesurfer juga memutar
+                        wavesurferInstance.seekTo(audioPlayer.currentTime / audioPlayer.duration);
+                    }
                 }
             });
             audioPlayer.addEventListener('volumechange', () => {
@@ -162,6 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             audioPlayer.addEventListener('timeupdate', () => {
+                // REVISI: Update Wavesurfer progress hanya jika audioPlayer yang utama dan Wavesurfer tidak sedang memutar sendiri
                 if (wavesurferInstance && wavesurferInstance.getDuration() > 0 && !wavesurferInstance.isPlaying() && !isSeeking) {
                     wavesurferInstance.seekTo(audioPlayer.currentTime / audioPlayer.duration);
                 }
@@ -181,9 +189,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Memastikan URL adalah absolute untuk Wavesurfer
         let fullAudioUrl = audioUrl;
-        if (audioUrl.startsWith('/')) { // Jika relatif, gabungkan dengan API_BASE_URL
-            fullAudioUrl = API_BASE_URL + audioUrl;
-        }
+        // REVISI: Logic ini tidak diperlukan jika backend mengembalikan URL absolut penuh.
+        // Jika backend mengembalikan path relatif seperti '/static/audio_output/xxx.mp3',
+        // maka logic ini benar. Sesuaikan dengan apa yang benar-benar dikembalikan backend Anda.
+        // Asumsi saat ini: backend mengembalikan full absolute URL.
+        // if (audioUrl.startsWith('/')) { // Jika relatif, gabungkan dengan API_BASE_URL
+        //     fullAudioUrl = API_BASE_URL + audioUrl;
+        // }
 
         if (!fullAudioUrl.startsWith('http')) {
             console.error('❌ URL audio yang dihasilkan bukan URL absolut:', fullAudioUrl);
@@ -191,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusMsg.textContent = 'URL audio tidak valid. Periksa konfigurasi API_BASE_URL atau respons backend.';
                 statusMsg.className = 'text-red-600';
             }
-            return;
+            // REVISI: Jangan return, coba muat ke audioPlayer sebagai fallback.
         }
         
         try {
@@ -203,6 +215,10 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('🔄 Wavesurfer memuat audio dari:', fullAudioUrl);
             ws.load(fullAudioUrl).then(() => {
                 console.log('✅ Wavesurfer berhasil memuat audio baru.');
+                if (audioPlayer) {
+                    // REVISI: Set wavesurfer.currenttime = audioplayer.currenttime untuk sinkronisasi awal
+                    wavesurferInstance.seekTo(audioPlayer.currentTime / audioPlayer.duration);
+                }
             }).catch(error => {
                 console.error('❌ Wavesurfer.load() gagal:', error);
                 if (statusMsg) {
@@ -257,11 +273,12 @@ document.addEventListener('DOMContentLoaded', function() {
             audioPlayer.currentTime = 0;
             audioPlayer.src = '';
             audioPlayer.removeAttribute('controls'); // Sembunyikan kontrol saat loading
-            // Pastikan Wavesurfer juga direset jika ada
-            if (wavesurferInstance) {
-                wavesurferInstance.pause();
-                wavesurferInstance.empty();
-            }
+        }
+        // REVISI: Pastikan Wavesurfer juga direset jika ada
+        if (wavesurferInstance) {
+            wavesurferInstance.pause();
+            wavesurferInstance.empty();
+            wavesurferInstance.stop(); // REVISI: Stop wavesurfer
         }
            
         if (downloadBtn) {
@@ -306,12 +323,15 @@ document.addEventListener('DOMContentLoaded', function() {
             clearTimeout(timeoutId);
                
             if (!response.ok) {
-                let errorMessage = `HTTP error! Status: ${response.status}`;
+                // REVISI: Penanganan error lebih detail
+                let errorMessage = `HTTP error! Status: ${response.status} (${response.statusText})`;
                 try {
                     const errorBody = await response.json();
-                    errorMessage = errorBody.error || errorBody.message || errorMessage;
+                    if (errorBody && errorBody.error) {
+                        errorMessage = errorBody.error; // Menggunakan pesan error dari backend
+                    }
                 } catch (jsonError) {
-                    errorMessage = `${response.statusText || 'Unknown error'} (Gagal mengurai respons error).`;
+                    console.warn('⚠️ Gagal mengurai respons error sebagai JSON:', jsonError);
                 }
                 throw new Error(errorMessage);
             }
@@ -319,20 +339,30 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             console.log('📥 Respon diterima:', result);
                
-            if (result.status === 'error' || result.error) {
-                throw new Error(result.error || result.message || 'Server mengembalikan status error.');
+            // REVISI: Cek properti 'error' atau 'success' yang dikembalikan oleh backend
+            if (result.error) { // Jika backend secara eksplisit mengembalikan 'error'
+                throw new Error(result.error);
+            }
+            if (!result.success) { // Jika backend tidak mengembalikan 'success: true'
+                 throw new Error(result.message || 'Server mengembalikan respons yang tidak berhasil.');
             }
             
             // Backend sekarang mengembalikan audio_url (path relatif) dan download_url (URL absolut)
-            if (!result.audio_url || !result.download_url) {
-                throw new Error('Server tidak mengembalikan URL audio yang valid.');
+            // Asumsi: audio_url adalah path relatif seperti "/static/audio_output/file.mp3"
+            //         download_url adalah URL absolut, atau bisa kita bangun di frontend
+            if (!result.filename || !result.audio_url) {
+                throw new Error('Server tidak mengembalikan nama file atau URL audio yang valid.');
             }
                
-            currentAudioUrl = API_BASE_URL + result.audio_url; // URL untuk player Wavesurfer/HTML5 (harus absolut)
-            currentDownloadUrl = result.download_url; // URL absolut untuk download
+            // REVISI: currentAudioUrl HARUS URL ABSOLUT untuk Wavesurfer dan HTML5 player
+            currentAudioUrl = `${API_BASE_URL}${result.audio_url}`;
+            // REVISI: currentDownloadUrl HARUS URL ABSOLUT untuk download
+            // Jika backend memberikan URL download terpisah, gunakan itu.
+            // Jika tidak, kita bisa membuatnya dari audio_url.
+            currentDownloadUrl = result.download_url || currentAudioUrl; // Fallback jika backend tidak memberi download_url
             
-            console.log('🎵 URL Audio untuk player:', currentAudioUrl);
-            console.log('📥 URL Download:', currentDownloadUrl);
+            console.log('🎵 URL Audio untuk player (absolut):', currentAudioUrl);
+            console.log('📥 URL Download (absolut):', currentDownloadUrl);
                
             audioSection.style.display = 'block'; // Tampilkan bagian hasil
             
@@ -340,6 +370,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('🔍 DEBUG: Updating metadata UI...');
             console.log('Received result for metadata:', result); // Log hasil keseluruhan untuk debugging
 
+            // REVISI: Pastikan properti yang diakses sesuai dengan respons backend
+            // Backend Flask Anda mengembalikan 'genre', 'tempo', 'duration', 'id', 'audio_url', 'filename'
+            // word_count dan syllable_count belum ada di backend
             if (genreDisplay) {
                 const genreValue = result.genre || 'N/A';
                 genreDisplay.textContent = genreValue;
@@ -349,7 +382,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (tempoDisplay) {
-                const tempoValue = result.tempo || 'N/A';
+                const tempoValue = (result.tempo ? `${result.tempo} BPM` : 'N/A'); // REVISI: Tambah ' BPM'
                 tempoDisplay.textContent = tempoValue;
                 console.log(`✅ Tempo updated: "${tempoValue}"`);
             } else {
@@ -357,21 +390,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (durationDisplay) {
-                const durationValue = result.estimated_duration || 'N/A';
+                const durationValue = (result.duration ? `${result.duration} detik` : 'N/A'); // REVISI: Tambah ' detik'
                 durationDisplay.textContent = durationValue;
                 console.log(`✅ Duration updated: "${durationValue}"`);
             } else {
                 console.error('❌ durationDisplay element not found or is null!');
             }
 
+            // REVISI: Properti ini belum dikembalikan oleh backend, akan selalu 0/N/A
             if (lyricsWordCountDisplay) {
-                const wordCountValue = result.lyrics_word_count || '0';
+                const wordCountValue = result.lyrics_word_count || '0'; 
                 lyricsWordCountDisplay.textContent = wordCountValue;
                 console.log(`✅ Word count updated: "${wordCountValue}"`);
             } else {
                 console.error('❌ lyricsWordCountDisplay element not found or is null!');
             }
 
+            // REVISI: Properti ini belum dikembalikan oleh backend, akan selalu 0/N/A
             if (lyricsSyllableCountDisplay) {
                 const syllableCountValue = result.lyrics_syllable_count || '0';
                 lyricsSyllableCountDisplay.textContent = syllableCountValue;
@@ -409,9 +444,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (currentAudioUrl.endsWith('.mp3') || currentAudioUrl.endsWith('.wav')) {
                 // Memuat Wavesurfer setelah audioPlayer mulai memuat
                 // atau setelah jeda singkat untuk memastikan AudioContext aktif
-                setTimeout(() => {
-                    updateWavesurfer(currentAudioUrl);
-                }, 500); 
+                // REVISI: Panggil updateWavesurfer langsung, Wavesurfer akan handle loading.
+                // Tidak perlu setTimeout yang berpotensi menyebabkan race condition.
+                // Wavesurfer.js juga akan mengurus AudioContext-nya sendiri jika diberikan.
+                updateWavesurfer(currentAudioUrl);
             } else {
                 console.warn('⚠️ Format audio tidak didukung oleh visualizer (hanya MP3/WAV). Player standar akan digunakan.');
                 if (statusMsg) {
@@ -422,12 +458,16 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (downloadBtn) {
                 downloadBtn.disabled = false;
-                downloadBtn.textContent = `Download (${result.filesize_kb} KB)`;
+                // REVISI: filesize_kb belum dikembalikan oleh backend.
+                // Jika ingin menampilkan ukuran, backend harus mengembalikan properti tersebut.
+                // Contoh: downloadBtn.textContent = `Download (${result.filesize_kb ? result.filesize_kb + ' KB' : 'Audio'})`;
+                downloadBtn.textContent = `Download Audio`; 
             }
 
-            if (statusMsg && !statusMsg.textContent.includes("Error")) {
-                // Biarkan statusMsg diperbarui oleh canplaythrough event listener
-            }
+            // REVISI: Kondisi ini bisa dihapus karena statusMsg akan diupdate di tempat lain
+            // if (statusMsg && !statusMsg.textContent.includes("Error")) {
+            //     // Biarkan statusMsg diperbarui oleh canplaythrough event listener
+            // }
                
             audioSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
                
@@ -437,7 +477,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let errorMsg = 'Terjadi kesalahan: ';
             if (error.name === 'AbortError') {
                 errorMsg += 'Permintaan melebihi batas waktu (3 menit). Coba lagi dengan lirik yang lebih pendek atau periksa koneksi server.';
-            } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+            } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch') || error.message.includes('Failed to load resource')) {
                 errorMsg += 'Tidak dapat terhubung ke server. Pastikan backend Flask berjalan dan bisa diakses.';
             } else if (error.message.includes('Method Not Allowed')) {
                 errorMsg += 'Backend menolak metode permintaan (CORS issue?). Pastikan Anda menggunakan URL backend yang benar di API_BASE_URL.';
@@ -449,7 +489,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusMsg.textContent = errorMsg;
                 statusMsg.className = 'text-red-600';
             }
-            alert(errorMsg);
+            // REVISI: Hapus alert() untuk UX yang lebih baik, cukup tampilkan di statusMsg
+            // alert(errorMsg); 
                
         } finally {
             isGenerating = false;
@@ -504,9 +545,12 @@ document.addEventListener('DOMContentLoaded', function() {
        
     // Keyboard shortcuts
     document.addEventListener('keydown', async (e) => {
+        // REVISI: Pastikan hanya tombol generate yang aktif ketika Ctrl/Cmd + Enter ditekan
         if (textInput && (e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
-            await generateInstrumental();
+            if (!generateBtn.disabled) { // REVISI: Hanya generate jika tombol tidak disabled
+                await generateInstrumental();
+            }
         }
            
         const isInputActive = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
@@ -514,7 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             // PENTING: Panggil resumeAudioContext() sebelum play()
             resumeAudioContext(); 
-            if (wavesurferInstance && wavesurferInstance.isReady && currentAudioUrl) {
+            if (wavesurferInstance && wavesurferInstance.isReady && currentAudioUrl) { // REVISI: Periksa wavesurferInstance.isReady
                 if (wavesurferInstance.isPlaying()) {
                     wavesurferInstance.pause();
                 } else {
@@ -566,10 +610,11 @@ document.addEventListener('DOMContentLoaded', function() {
        
     // Contoh lirik otomatis jika kosong - DIPERBAIKI SyntaxError di sini
     if (textInput && !textInput.value.trim()) {
+        // REVISI: Menggunakan template literal (backticks) untuk string multiline
         textInput.value = `[verse]
 Sebuah melodi indah dengan piano lembut dan senar halus
 [chorus]
-Emosi yang meningkat menuju klimaks yang kuat`; // Menggunakan template literal (backticks) untuk string multiline
+Emosi yang meningkat menuju klimaks yang kuat`; 
         if (statusMsg) {
             statusMsg.textContent = 'Contoh lirik dimuat. Edit dan klik "Generate Instrumental"!';
             statusMsg.className = 'text-blue-600';
@@ -581,16 +626,22 @@ Emosi yang meningkat menuju klimaks yang kuat`; // Menggunakan template literal 
    
 // --- Global Error Handling untuk debugging ---
 window.addEventListener('error', (event) => {
+    // REVISI: Perbaikan pesan error agar lebih spesifik dan tidak mengacaukan log
     console.error('💥 Global error (unhandled exception):', event.error);
     const nonCritical = [
         'clearMessagesCache', '-moz-osx-font-smoothing', '-webkit-text-size-adjust',
         'DOMException: The operation was aborted', 'Invalid URI. Load of media resource  failed',
-        'TypeError: playPauseBtn is null', 'Failed to load media', 'Failed to fetch', 'A network error occurred' 
+        'TypeError: playPauseBtn is null', 'Failed to load media', 'A network error occurred',
+        'SyntaxError: '' string literal contains an unescaped line break' // REVISI: Tambahkan ini
     ];
-    const isCritical = !nonCritical.some(msg => event.error.message.includes(msg) || (event.error.stack && event.error.stack.includes(msg)));
+    // REVISI: Cek event.message dan event.filename/event.lineno untuk debugging SyntaxError
+    const isCritical = !nonCritical.some(msg => 
+        (event.message && event.message.includes(msg)) || 
+        (event.error && event.error.message && event.error.message.includes(msg))
+    );
        
     if (isCritical) {
-        console.warn('⚡️ KESALAHAN KRITIS: ', event.error.message);
+        console.warn('⚡️ KESALAHAN KRITIS: ', event.message || event.error.message);
     }
 });
    
