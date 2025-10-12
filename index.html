@@ -102,14 +102,14 @@
 
         <!-- Input Lirik / Deskripsi Musik -->
         <div class="mb-4">
-            <label for="textInput" class="block text-gray-700 text-sm font-bold mb-2">Lirik atau Deskripsi Musik:</label>
+            <label for="textInput" class="block text-gray-700 text-sm font-bold mb-2">Lirik atau Deskripsi :</label>
             <textarea id="textInput" rows="6" class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out" placeholder="Masukkan lirik atau deskripsi suasana musik yang Anda inginkan..."></textarea>
             <p id="charCountDisplay" class="text-xs text-gray-500 text-right mt-1">0 karakter</p>
         </div>
 
         <!-- Pilihan Genre Musik -->
         <div class="mb-4">
-            <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">Pilih Genre Musik:</label>
+            <label for="genreSelect" class="block text-gray-700 text-sm font-bold mb-2">Pilih Genre :</label>
             <select id="genreSelect" class="shadow-sm border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out">
                 <option value="auto">Auto-Detect (Rekomendasi)</option>
                 <option value="pop">Pop</option>
@@ -126,7 +126,7 @@
 
         <!-- Input Tempo (BPM) -->
         <div class="mb-6">
-            <label for="tempoInput" class="block text-gray-700 text-sm font-bold mb-2">Tempo (BPM, kosongkan untuk auto):</label>
+            <label for="tempoInput" class="block text-gray-700 text-sm font-bold mb-2">Tempo :</label>
             <input type="number" id="tempoInput" class="shadow-sm appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out" placeholder="misalnya: 120">
         </div>
 
@@ -150,30 +150,30 @@
             
             <!-- DEBUG: Info untuk memastikan elemen metadata ada -->
             <div class="mb-2 text-xs text-gray-500">
-                <p>Debug Info: Elemen metadata tersedia di DOM</p>
+                <p>Info :</p>
             </div>
             
             <!-- Metadata Audio (dengan styling yang lebih jelas) -->
             <div class="metadata-grid">
                 <h3 class="text-sm font-semibold text-gray-700 mb-2">Informasi Musik:</h3>
                 <div class="metadata-item">
-                    <span class="metadata-label">Genre:</span>
+                    <span class="metadata-label">Genre :</span>
                     <span id="genreDisplay" class="metadata-value">N/A</span>
                 </div>
                 <div class="metadata-item">
-                    <span class="metadata-label">Tempo:</span>
+                    <span class="metadata-label">Tempo :</span>
                     <span id="tempoDisplay" class="metadata-value">N/A</span>
                 </div>
                 <div class="metadata-item">
-                    <span class="metadata-label">Durasi:</span>
+                    <span class="metadata-label">Durasi :</span>
                     <span id="durationDisplay" class="metadata-value">N/A</span>
                 </div>
                 <div class="metadata-item">
-                    <span class="metadata-label">Kata Lirik:</span>
+                    <span class="metadata-label">Kata :</span>
                     <span id="lyricsWordCountDisplay" class="metadata-value">0</span>
                 </div>
                 <div class="metadata-item">
-                    <span class="metadata-label">Suku Kata:</span>
+                    <span class="metadata-label">Suku Kata :</span>
                     <span id="lyricsSyllableCountDisplay" class="metadata-value">0</span>
                 </div>
             </div>
