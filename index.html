@@ -205,33 +205,142 @@
     
     <!-- DEBUG: Script tambahan untuk memastikan elemen tersedia -->
     <script>
-        // Debug script untuk memastikan elemen tersedia
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔍 DEBUG: DOM loaded, checking elements...');
-            
-            const elementsToCheck = [
-                'textInput', 'genreSelect', 'tempoInput', 'generateBtn', 'loadingSpinner',
-                'audioPlayer', 'downloadBtn', 'waveform', 'statusMsg', 'charCountDisplay',
-                'audioSection', 'genreDisplay', 'tempoDisplay', 'durationDisplay',
-                'lyricsWordCountDisplay', 'lyricsSyllableCountDisplay'
-            ];
-            
-            elementsToCheck.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    console.log(`✅ Element ${id} found:`, element);
-                    // Update debug info
-                    if (id === 'audioPlayer') {
-                        document.getElementById('debugAudioPlayerId').textContent = 'Found';
-                    } else if (id === 'genreDisplay') {
-                        document.getElementById('debugGenreDisplayId').textContent =';
+        document.getElementById('musicForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData();
+            formData.append('lyrics', document.getElementById('lyrics').value.trim());
+            formData.append('genre', document.getElementById('genre').value);
+
+            const tempoValue = document.getElementById('tempo').value;
+            formData.append('tempo', tempoValue === '' ? 'auto' : tempoValue);
+
+            const resultDiv = document.getElementById('result');
+            const statusDiv = document.getElementById('status');
+            const loadingDiv = document.getElementById('loading');
+            const audioPlayer = document.getElementById('audioPlayer');
+            const downloadLinks = document.getElementById('downloadLinks');
+            const infoDiv = document.getElementById('info');
+
+            resultDiv.classList.add('show');
+            statusDiv.innerHTML = '';
+            loadingDiv.style.display = 'block';
+            audioPlayer.style.display = 'none';
+            downloadLinks.innerHTML = '';
+            infoDiv.innerHTML = '';
+
+            try {
+                statusDiv.innerHTML = '<p class="success">🚀 Memulai generasi instrumental...</p>';
+
+                // --- START OF MODIFICATION ---
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    controller.abort();
+                    statusDiv.innerHTML = `
+                        <p class="error">❌ Permintaan melebihi batas waktu. Server mungkin masih memproses, harap tunggu atau coba lagi nanti.</p>
+                        <p style="font-size: 0.9em; color: #e67e22;">
+                            💡 Jika instrumental tetap tidak muncul, coba sesuaikan lirik atau periksa koneksi internet Anda.
+                        </p>
+                    `;
+                    loadingDiv.style.display = 'none';
+                }, 5 * 60 * 1000); // Set timeout menjadi 5 menit (5 * 60 * 1000 milidetik)
+
+                const response = await fetch('/generate-instrumental', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal // Kaitkan signal controller dengan fetch
+                });
+
+                clearTimeout(timeoutId); // Hapus timeout jika request selesai sebelum waktu habis
+                loadingDiv.style.display = 'none';
+                // --- END OF MODIFICATION ---
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    if (data.success) {
+                        statusDiv.innerHTML = `
+                            <p class="success">🎉 Instrumental berhasil !</p>
+                            <p><strong>Genre:</strong> <span class="info">${data.genre}</span></p>
+                            <p><strong>Tempo:</strong> <span class="info">${data.tempo} BPM</span></p>
+                            <p><strong>Durasi:</strong> <span class="info">${data.duration} detik</span></p>
+                            <p><strong>ID:</strong> <span class="info">${data.id}</span></p>
+                            <p><strong>Progression:</strong> <span class="info">${data.progression || 'Random'}</span></p>
+                        `;
+
+                        audioPlayer.src = `/static/audio_output/${data.filename}`;
+                        audioPlayer.style.display = 'block';
+                        audioPlayer.load();
+
+                        setTimeout(() => {
+                            audioPlayer.play().catch(e => {
+                                console.log('Autoplay blocked:', e);
+                            });
+                        }, 500);
+
+                        downloadLinks.innerHTML = `
+                            <a href="/static/audio_output/${data.filename}" class="download-btn" download>
+                                💾 Download MP3 (${Math.round(data.size || 0)} KB)
+                            </a>
+                            <br><small>Share instrumental Anda! 🎵</small>
+                        `;
+
+                        infoDiv.innerHTML = `
+                            <p style="font-size: 0.9em; color: #7f8c8d; margin-top: 20px;">
+                                <strong>🔧 Technical Info:</strong> Generated dengan 10+ chord progressions per genre,
+                                channel isolation (Melody/Harmony/Bass/Drums terpisah) menggunakan FluidSynth +
+                                General MIDI SoundFont. Proyek open-source dengan pitch bend effects yang dioptimalkan
+                                dan output audio diproses dengan kompresi profesional.
+                            </p>
+                        `;
+                    } else {
+                        throw new Error(data.error || 'Unknown error');
                     }
                 } else {
-                    console.error(`❌ Element ${id} NOT found!`);
+                    const errorData = await response.json();
+                    statusDiv.innerHTML = `<p class="error">❌ Error: ${errorData.error || 'Gagal generate instrumental'}</p>`;
+
+                    if (errorData.error && errorData.error.includes('FluidSynth')) {
+                        statusDiv.innerHTML += `
+                            <p style="font-size: 0.9em; color: #e67e22;">
+                                💡 Tips: Pastikan FluidSynth terinstal: <code>sudo apt install fluidsynth libsndfile1</code>
+                            </p>
+                        `;
+                    } else if (errorData.error && errorData.error.includes('FFmpeg')) {
+                         statusDiv.innerHTML += `
+                            <p style="font-size: 0.9em; color: #e67e22;">
+                                💡 Tips: Pastikan FFmpeg terinstal: <code>sudo apt install ffmpeg</code>
+                            </p>
+                         `;
+                    } else if (errorData.error && errorData.error.includes('MIDI')) {
+                        statusDiv.innerHTML += `
+                            <p style="font-size: 0.9em; color: #e67e22;">
+                                🔧 MIDI Error: Coba restart server atau kurangi kompleksitas lirik.
+                            </p>
+                        `;
+                    }
                 }
-            });
-            
-            console.log('🔍 DEBUG: Element check complete.');
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                // Check if the error is due to abortion (timeout)
+                if (error.name === 'AbortError') {
+                    // Message already set by setTimeout, do nothing or refine if needed
+                } else {
+                    statusDiv.innerHTML = `
+                        <p class="error">🌐 Network Error: ${error.message}</p>
+                        <p style="font-size: 0.9em; color: #7f8c8d;">
+                            Pastikan server berjalan di http://127.0.0.1:5000 dan koneksi stabil.
+                            Coba refresh halaman atau restart server.
+                        </p>
+                    `;
+                    console.error('Generate error:', error);
+                }
+            }
+        });
+
+        document.getElementById('lyrics').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 300) + 'px';
         });
     </script>
 </body>
